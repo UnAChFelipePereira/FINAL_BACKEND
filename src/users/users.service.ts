@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ResetToken } from './reset-token.schema';
 import { MailService } from 'src/services/mail.service';
 import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
 
 
 
@@ -69,28 +70,27 @@ export class UsersService {
   async loginUser(email: string, password: string) {
     try {
       const user = await this.userModel.findOne({ email });
-      const isPasswordValid = await bcryp.compare(password, user.password);
-
-      if (!isPasswordValid) {
-        throw new HttpException('Contraseña invalida', HttpStatus.UNAUTHORIZED)   
+      if (!user) {
+        throw new HttpException('Usuario no encontrado', HttpStatus.UNAUTHORIZED);
       }
-
-      if (user && isPasswordValid) {
-       const payload = {sub: user._id, email: user.email, name: user.name, lastname: user.lastname}
-       const { access_token, refresh_token } = await this.generateTokens(payload);
-       return {
-        access_token: access_token,
-        refresh_token: refresh_token,
+  
+      const isPasswordValid = await bcryp.compare(password, user.password);
+      if (!isPasswordValid) {
+        throw new HttpException('Contraseña incorrecta', HttpStatus.UNAUTHORIZED);
+      }
+  
+      const payload = { sub: user._id, email: user.email, name: user.name, lastname: user.lastname };
+      const { access_token, refresh_token } = await this.generateTokens(payload);
+  
+      return {
+        access_token,
+        refresh_token,
         user: this.removePassword(user),
-        message: 'INGRESO DE SESIÓN CON ÉXITO',
-
-       };  
-
-      }   
+        message: 'Inicio de sesión exitoso',
+      };
     } catch (error) {
-      throw new HttpException('Revisa tus credenciales', HttpStatus.UNAUTHORIZED)
+      throw new HttpException('Revisa tus credenciales', HttpStatus.UNAUTHORIZED);
     }
-
   }
 
   async refreshToken(refreshToken: string){

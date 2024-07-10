@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Put, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Put, UseGuards, UseInterceptors, UploadedFile, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { last } from 'rxjs';
@@ -8,13 +8,15 @@ import { JwtModule, JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { User } from './entities/user.entity';
+import { CursoService } from 'src/curso/curso.service';
+import { User, UserDocument } from './entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService,private readonly cursoService: CursoService ) {}
+
 
   @Post('register')
   create(@Body() createUserDto: CreateUserDto) {
@@ -81,5 +83,30 @@ req.profilePic,
 )
 }
 
+
+// @UseGuards(JwtAuthGuard)
+@Post(':userId/enroll/:cursoId')
+async enrollCourse(
+  @Param('userId') userId: string,
+  @Param('cursoId') cursoId: string,
+) {
+  try {
+    const user = await this.usersService.enrollUserInCurso(userId, cursoId);
+    return { message: 'User enrolled in curso successfully', user };
+  } catch (error) {
+    throw new NotFoundException(error.message);
+  }
+}
+
+// @UseGuards(JwtAuthGuard)
+@Get(':userId/enrolled-cursos')
+async getEnrolledCursos(@Param('userId') userId: string) {
+  try {
+    const cursos = await this.usersService.getEnrolledCursos(userId);
+    return { cursos };
+  } catch (error) {
+    throw new NotFoundException(error.message);
+  }
+}
 
 }

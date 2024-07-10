@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
-export type CursoDocument = Curso & Document;
+export type CursoDocument = HydratedDocument<Curso>;
 
 @Schema()
-export class Curso {
+export class Curso{
   
 @Prop({ required: true })
   nombre_curso: string;
@@ -15,10 +15,13 @@ export class Curso {
 @Prop({ required: true })
   descripcion: string;
   
-@Prop({ required: true })
+@Prop({ required: false })
   iconocurso:string;
+
+  @Prop({ required: false })
+  iconocursoNombre:string; 
   
-@Prop({ required: true })
+@Prop({ required: false })
   archivo_pt1: string;
   
 @Prop({ required: true })
@@ -113,7 +116,7 @@ export class Curso {
 
 
   
-@Prop({ required: true })
+@Prop({ required: false })
   archivo_pt2: string;
   
 @Prop({ required: true })
@@ -208,7 +211,7 @@ export class Curso {
 
 
   
-@Prop({ required: true })
+@Prop({ required: false })
   archivo_pt3: string;
   
 @Prop({ required: true })
@@ -303,7 +306,7 @@ export class Curso {
 
   
   
-@Prop({ required: true })
+@Prop({ required: false })
   archivo_pt4: string;
   
 @Prop({ required: true })
@@ -398,7 +401,7 @@ export class Curso {
 
 
   
-@Prop({ required: true })
+@Prop({ required: false })
   archivo_pt5: string;
   
 @Prop({ required: true })
@@ -490,6 +493,9 @@ export class Curso {
   
 @Prop({ required: true })
   respuestacorrectap5pt5: string;
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
+  enrolledUsers: Types.ObjectId[];
 }
 
 export const CursoSchema = SchemaFactory.createForClass(Curso);

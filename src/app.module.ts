@@ -7,10 +7,11 @@ import { MailService } from './services/mail.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { UsersController } from './users/users.controller';
 import { UsersService } from './users/users.service';
+import { CursoModule } from './curso/curso.module';
 
 
 @Module({
-  imports: [UsersModule, MongooseModule.forRoot('mongodb://root:admin@localhost/dbtesis'),
+  imports: [UsersModule, CursoModule, MongooseModule.forRoot('mongodb://root:admin@localhost/dbtesis'),
     MulterModule.register({dest: './uploads', })
   ],
   controllers: [AppController],

@@ -2,13 +2,16 @@ import { Injectable, HttpException, HttpStatus, NotFoundException, UnauthorizedE
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './entities/user.entity';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as bcryp from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ResetToken } from './reset-token.schema';
 import { MailService } from 'src/services/mail.service';
 import { v4 as uuidv4 } from 'uuid';
+import { CursoDocument } from 'src/curso/curso.entity';
+import { Curso } from 'src/curso/curso.entity';
 import jwt from 'jsonwebtoken';
+import { CursoService } from 'src/curso/curso.service';
 
 
 
@@ -20,10 +23,23 @@ type Tokens ={
 @Injectable()
 export class UsersService {
 
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>, private jwtSvc: JwtService,
-              @InjectModel(ResetToken.name) private ResetTokenModel: Model<ResetToken>,
-              private mailService: MailService,  
-            ){}
+  // constructor(@InjectModel(User.name) private userModel: Model<UserDocument>, private jwtSvc: JwtService,
+  //             @InjectModel(Curso.name) private cursoModel: Model<CursoDocument>,
+  //             // @InjectModel(Curso.name) private cursoController: Model<CursoController>,
+  //             // @InjectModel(Curso.name) private cursoService: Model<CursoService>,
+  //             // private cursoService: CursoService,
+  //             @InjectModel(ResetToken.name) private ResetTokenModel: Model<ResetToken>,
+  //             private mailService: MailService,  
+  //           ){}
+
+
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>, private jwtSvc: JwtService,
+    @InjectModel(ResetToken.name) private ResetTokenModel: Model<ResetToken>,
+    @InjectModel(Curso.name) private cursoModel: Model<CursoDocument>, // Asegúrate de inyectar CursoModel correctamente
+    // private jwtService: JwtService,
+    private mailService: MailService,
+  ) {}
 
   //async create(createUserDto: CreateUserDto):Promise<User> {
     async create(createUserDto: CreateUserDto) {
@@ -207,6 +223,57 @@ async forgotPassword(email: string) {
 
 async updateProfilePic(oid, profilePicPath: string): Promise<void> {
   await this.userModel.findByIdAndUpdate(oid, { profilePic: profilePicPath });
+}
+
+
+// async enrollUserInCurso(userId: string, cursoId: string): Promise<User> {
+//   const user = await this.userModel.findById(userId);
+//   if (!user) {
+//     throw new NotFoundException('User not found');
+//   }
+
+//   const curso = await this.cursoService.findById(cursoId);
+//   if (!curso) {
+//     throw new NotFoundException('Curso not found');
+//   }
+
+//   // Añadir el ID del curso al array de cursos inscritos del usuario
+//   user.enrolledCourses.push(curso._id); // Añade solo el ID del curso
+//   await user.save();
+
+//   return user;
+// }
+
+async enrollUserInCurso(userId: string, cursoId: string): Promise<User> {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+  const curso = await this.cursoModel.findById(cursoId);
+  if (!curso) {
+    throw new NotFoundException('Curso not found');
+  }
+
+
+  const alreadyEnrolled = user.enrolledCourses.some(c => c.equals(curso._id));
+  if (alreadyEnrolled) {
+    throw new Error('User already enrolled in this curso');
+  }
+
+  // Añadir el ID del curso al array de cursos inscritos del usuario
+  user.enrolledCourses.push(curso._id); // Añade solo el ID del curso
+  await user.save();
+
+  return user;
+}
+
+async getEnrolledCursos(userId: string): Promise<any> {
+  const user = await this.userModel.findById(userId).populate('enrolledCourses');
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+  return user.enrolledCourses;
 }
 
 

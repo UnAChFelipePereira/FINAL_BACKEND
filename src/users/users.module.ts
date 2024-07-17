@@ -8,12 +8,17 @@ import { MailService } from 'src/services/mail.service';
 import { ResetToken, ResetTokenSchema } from './reset-token.schema';
 import { CursoModule } from 'src/curso/curso.module';
 import { CursoService } from 'src/curso/curso.service';
+import { CursoSchemaSchema } from 'src/curso/curso.schema';
+import { Curso, CursoSchema } from 'src/curso/curso.entity';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
-      { name: ResetToken.name, schema: ResetTokenSchema }
+      { name: ResetToken.name, schema: ResetTokenSchema },
+      { name: Curso.name , schema: CursoSchema }
+      // { name: CursoSchema.name , schema: CursoSchemaSchema }
+      
 
     ]),
     JwtModule.register({}), 

@@ -18,10 +18,18 @@ export class User extends Document {
   @Prop({ required: true })
   password: string;
 
-  @Prop({ type: SchemaTypes.ObjectId, ref: 'Curso' })
-  enrolledCourses: Types.ObjectId[];
+  //   @Prop({ type: SchemaTypes.ObjectId, ref: 'Curso' })
+  //   enrolledCourses: Types.ObjectId[];
+  @Prop()
+  cursosInscritos: string[];
 
-  @Prop({ type: 'oid', unique: true, name: 'reset_password_token', nullable: true })
+  
+  @Prop({
+    type: 'oid',
+    unique: true,
+    name: 'reset_password_token',
+    nullable: true,
+  })
   resetPasswordToken: string;
 
   @Prop()
@@ -29,7 +37,6 @@ export class User extends Document {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-
 
 // // import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 // // import mongoose, { HydratedDocument} from "mongoose";
@@ -43,7 +50,6 @@ export const UserSchema = SchemaFactory.createForClass(User);
 // @Schema()
 
 // export class User extends Document {
-
 
 //     @Prop({required: true })
 //     name: string;

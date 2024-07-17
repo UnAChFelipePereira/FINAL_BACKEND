@@ -99,14 +99,9 @@ async enrollCourse(
 }
 
 // @UseGuards(JwtAuthGuard)
-@Get(':userId/enrolled-cursos')
-async getEnrolledCursos(@Param('userId') userId: string) {
-  try {
-    const cursos = await this.usersService.getEnrolledCursos(userId);
-    return { cursos };
-  } catch (error) {
-    throw new NotFoundException(error.message);
-  }
+@Get(':id/cursos-inscritos')
+async getEnrolledCursos(@Param('id') id: string) {
+  return this.usersService.getEnrolledCursos(id);
 }
 
 }

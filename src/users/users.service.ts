@@ -12,6 +12,7 @@ import { CursoDocument } from 'src/curso/curso.entity';
 import { Curso } from 'src/curso/curso.entity';
 import jwt from 'jsonwebtoken';
 import { CursoService } from 'src/curso/curso.service';
+import { PrimeraFase, PrimeraFaseDocument } from 'src/primerafase/primerafase.entity';
 
 
 
@@ -36,7 +37,8 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>, private jwtSvc: JwtService,
     @InjectModel(ResetToken.name) private ResetTokenModel: Model<ResetToken>,
-    @InjectModel(Curso.name) private cursoModel: Model<CursoDocument>, // Asegúrate de inyectar CursoModel correctamente
+    @InjectModel(Curso.name) private cursoModel: Model<CursoDocument>,
+   // Asegúrate de inyectar CursoModel correctamente
     // private jwtService: JwtService,
     private mailService: MailService,
   ) {}
@@ -244,38 +246,38 @@ async updateProfilePic(oid, profilePicPath: string): Promise<void> {
 //   return user;
 // }
 
-async enrollUserInCurso(userId: string, cursoId: string): Promise<User> {
-    const user = await this.userModel.findById(userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+async enrollUserInCurso(userId: string, cursoId: string) {
+  const user = await this.userModel.findById(userId);
+  if (!user) {
+    throw new NotFoundException(`User with ID ${userId} not found`);
+  }
 
   const curso = await this.cursoModel.findById(cursoId);
   if (!curso) {
-    throw new NotFoundException('Curso not found');
+    throw new NotFoundException(`Curso with ID ${cursoId} not found`);
   }
 
-
-  const alreadyEnrolled = user.enrolledCourses.some(c => c.equals(curso._id));
-  if (alreadyEnrolled) {
-    throw new Error('User already enrolled in this curso');
-  }
-
-  // Añadir el ID del curso al array de cursos inscritos del usuario
-  user.enrolledCourses.push(curso._id); // Añade solo el ID del curso
+  user.cursosInscritos.push(cursoId);
   await user.save();
-
-  return user;
+  return { message: 'Usuario inscrito correctamente', user };
 }
 
-async getEnrolledCursos(userId: string): Promise<any> {
-  const user = await this.userModel.findById(userId).populate('enrolledCourses');
-  if (!user) {
-    throw new NotFoundException('User not found');
-  }
-  return user.enrolledCourses;
+async getEnrolledCursos(userId: string) {
+  const user = await this.userModel.findById(userId).populate('cursosInscritos').exec();
+  return { cursosInscritos: user.cursosInscritos };
 }
 
+// Métodos adicionales para buscar usuario y curso
+async findUserById(userId: string) {
+  return this.userModel.findById(userId).exec();
+}
 
+async findCursoById(cursoId: string) {
+  return this.cursoModel.findById(cursoId).exec();
+}
+
+async findOne(id: string): Promise<User> {
+  return this.userModel.findById(id).exec();
+}
 
 }

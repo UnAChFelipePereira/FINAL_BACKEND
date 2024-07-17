@@ -11,19 +11,24 @@ export class CreateCursoDto {
 
   @IsString()
   @IsNotEmpty()
-  readonly iconocursoNombre: string;
-
-  @IsString()
-  @IsNotEmpty()
   readonly descripcion: string;
 
-  @IsString()
-  @IsNotEmpty()
-  readonly iconocurso: string;
+  // @IsString()
+  // // @IsNotEmpty()
+  // readonly iconocurso: string;
 
   @IsString()
-  // @IsNotEmpty()
-  readonly archivo_pt1: string;
+  @IsNotEmpty()
+  readonly iconocursoNombre: string;
+
+
+  // @IsString()
+  // // @IsNotEmpty()
+  // readonly archivo_pt1: string;
+
+  @IsString()
+  @IsNotEmpty()
+  readonly archivo_pt1Nombre: string;
 
   @IsString()
   @IsNotEmpty()
@@ -149,9 +154,17 @@ export class CreateCursoDto {
   @IsNotEmpty()
   readonly respuestacorrectap5pt1: string;
 
+  // @IsString()
+  // // @IsNotEmpty()
+  // readonly archivo_pt2: string;
+
   @IsString()
-  // @IsNotEmpty()
-  readonly archivo_pt2: string;
+  @IsNotEmpty()
+  readonly archivo_pt2Nombre: string;
+
+  @IsString()
+  @IsNotEmpty()
+  readonly descripcionpt2: string;
 
   @IsString()
   @IsNotEmpty()
@@ -273,9 +286,17 @@ export class CreateCursoDto {
   @IsNotEmpty()
   readonly respuestacorrectap5pt2: string;
 
+  // @IsString()
+  // // @IsNotEmpty()
+  // readonly archivo_pt3: string;
+
   @IsString()
-  // @IsNotEmpty()
-  readonly archivo_pt3: string;
+  @IsNotEmpty()
+  readonly archivo_pt3Nombre: string;
+
+  @IsString()
+  @IsNotEmpty()
+  readonly descripcionpt3: string;
 
   @IsString()
   @IsNotEmpty()
@@ -397,9 +418,17 @@ export class CreateCursoDto {
   @IsNotEmpty()
   readonly respuestacorrectap5pt3: string;
 
+  // @IsString()
+  // // @IsNotEmpty()
+  // readonly archivo_pt4: string;
+
   @IsString()
-  // @IsNotEmpty()
-  readonly archivo_pt4: string;
+  @IsNotEmpty()
+  readonly archivo_pt4Nombre: string;
+
+  @IsString()
+  @IsNotEmpty()
+  readonly descripcionpt4: string;
 
   @IsString()
   @IsNotEmpty()
@@ -521,9 +550,17 @@ export class CreateCursoDto {
   @IsNotEmpty()
   readonly respuestacorrectap5pt4: string;
 
+  // @IsString()
+  // // @IsNotEmpty()
+  // readonly archivo_pt5: string;
+
   @IsString()
-  // @IsNotEmpty()
-  readonly archivo_pt5: string;
+  @IsNotEmpty()
+  readonly archivo_pt5Nombre: string;
+
+  @IsString()
+  @IsNotEmpty()
+  readonly descripcionpt5: string;
 
   @IsString()
   @IsNotEmpty()

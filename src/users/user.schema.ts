@@ -15,6 +15,9 @@ export class UserSchema extends Document {
     @Prop({required: true})
     email: string;
 
+    @Prop({required: true})
+    rol: string;
+
     @Prop({required: true, type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Curso' }]})
     cursosinscritos: mongoose.Types.ObjectId[];
 

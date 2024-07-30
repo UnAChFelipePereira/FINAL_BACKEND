@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Put, UseGuards, UseInterceptors, UploadedFile, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Put, UseGuards, UseInterceptors, UploadedFile, NotFoundException, Query, BadRequestException, Redirect, HttpCode, HttpStatus } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { last } from 'rxjs';
@@ -11,6 +11,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CursoService } from 'src/curso/curso.service';
 import { User, UserDocument } from './entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { ActivateUserDto } from './dto/activate-user.dto';
 
 
 @Controller('users')
@@ -19,13 +20,15 @@ export class UsersController {
 
 
   @Post('register')
+  @HttpCode(HttpStatus.CREATED)
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   login(@Body() createUserDto: CreateUserDto) {
-    const {email, password} = createUserDto
+    const { email, password } = createUserDto;
     return this.usersService.loginUser(email, password);
   }
 
@@ -41,6 +44,21 @@ export class UsersController {
     return this.usersService.Perfil(email);
     
   }
+
+  @Get('activate-account')
+  // @Redirect('http://localhost:4200/login', 302)
+  async activateAccount(@Query('token') token: string) {
+    console.log('Activando cuenta con token:', token); // Registro de depuración
+
+    const result = await this.usersService.activarUsuario(token);
+    if (!result) {
+      console.log('Token inválido o cuenta ya activada'); // Registro de depuración
+      throw new BadRequestException('Token inválido o cuenta ya activada');
+    }
+
+    // return { url: 'http://localhost:4200/login' };
+  }
+
 
   
   @Put('change-password')

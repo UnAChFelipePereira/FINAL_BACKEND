@@ -14,8 +14,6 @@ async function bootstrap() {
     credentials: true,
   });
 
-  
-
   app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
 
   await app.listen(3000);

@@ -20,9 +20,6 @@ export class Curso {
   @Prop({ required: true })
   iconocursoNombre: string;
 
-  // @Prop({ required: false })
-  // archivo_pt1: string;
-
   @Prop({ required: true })
   archivo_pt1Nombre: string;
 
@@ -119,12 +116,8 @@ export class Curso {
   @Prop({ required: true })
   respuestacorrectap5pt1: string;
 
-  // @Prop({ required: false })
-  // archivo_pt2: string;
-
   @Prop({ required: true })
   archivo_pt2Nombre: string;
-
 
   @Prop({ required: true })
   descripcionpt2: string;
@@ -219,12 +212,8 @@ export class Curso {
   @Prop({ required: true })
   respuestacorrectap5pt2: string;
 
-  // @Prop({ required: false })
-  // archivo_pt3: string;
-
   @Prop({ required: true })
   archivo_pt3Nombre: string;
-
 
   @Prop({ required: true })
   descripcionpt3: string;
@@ -318,9 +307,6 @@ export class Curso {
 
   @Prop({ required: true })
   respuestacorrectap5pt3: string;
-
-  // @Prop({ required: false })
-  // archivo_pt4: string;
 
   @Prop({ required: true })
   archivo_pt4Nombre: string;
@@ -418,9 +404,6 @@ export class Curso {
 
   @Prop({ required: true })
   respuestacorrectap5pt4: string;
-
-  // @Prop({ required: false })
-  // archivo_pt5: string;
 
   @Prop({ required: true })
   archivo_pt5Nombre: string;

@@ -34,12 +34,23 @@ export class UsersModule {
       .exclude(
         { path: 'users/register', method: RequestMethod.POST },
         { path: 'users/login', method: RequestMethod.POST },
-        { path: 'users/activate-account', method: RequestMethod.GET }
+        { path: 'users/activate-account', method: RequestMethod.GET },
+        { path: 'users/:id/cursos-inscritos', method: RequestMethod.GET },
+        { path: 'users/:userId/enroll/:cursoId', method: RequestMethod.POST },
+        { path: 'cursos/buscar-curso', method: RequestMethod.GET },
+        { path: 'users/upload-profile-picture', method: RequestMethod.POST },
+        { path: 'users/change-password', method: RequestMethod.PUT },
+        { path: 'users/refresh', method: RequestMethod.POST },
+        { path: 'users/perfil', method: RequestMethod.POST },
+        { path: 'users/forgot-password', method: RequestMethod.POST },
       )
       .forRoutes(UsersController);
 
     consumer
       .apply(RolesMiddleware)
+      .exclude(
+        { path: 'users/change-password', method: RequestMethod.PUT }
+      )
       .forRoutes({ path: 'restricted/*', method: RequestMethod.ALL });
   }
 }

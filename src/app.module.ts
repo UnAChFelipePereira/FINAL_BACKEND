@@ -12,6 +12,7 @@ import { EventoModule } from './evento/evento.module';
 import { PrimeraFaseModule } from './primerafase/primerafase.module';
 import { FilesController } from './files/file.controller';
 import { FileModule } from './files/file.module';
+import { AuthMiddleware } from './users/middleware.service';
 
 
 @Module({

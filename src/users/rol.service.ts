@@ -8,14 +8,14 @@ export class RolesMiddleware implements NestMiddleware {
   constructor(private readonly userService: UsersService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const user = req.user as UserDocument; // Asegúrate de que el tipo sea UserDocument
-    if (!user) {
-      throw new UnauthorizedException('Usuario no econtrado');
-    }
+    // const user = req.user as UserDocument; 
+    // if (!user) {
+    //   throw new UnauthorizedException('Usuario no encontrado');
+    // }
 
-    if (user.rol !== 'docente' && req.path.startsWith('/restricted')) {
-      throw new UnauthorizedException('No tienes acceso');
-    }
+    // if (user.rol !== 'docente' && req.path.startsWith('/restricted')) {
+    //   throw new UnauthorizedException('No tienes acceso');
+    // }
 
     next();
   }

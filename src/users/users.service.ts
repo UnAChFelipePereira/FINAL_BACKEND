@@ -160,26 +160,6 @@ export class UsersService {
       throw new HttpException('Refresh_token fallido', HttpStatus.UNAUTHORIZED);
     }
   }
-
-  // private async generateTokens(user): Promise<Tokens> {
-  //   const jwtPayload = { sub: user._id, email: user.email, name: user.name };
-
-  //   const [accessToken, refreshToken] = await Promise.all([
-  //     this.jwtSvc.signAsync(jwtPayload, {
-  //       secret: 'jwt secret',
-  //       expiresIn: '1d',
-  //     }),
-  //     this.jwtSvc.signAsync(jwtPayload, {
-  //       secret: 'jwt secret_refresh',
-  //       expiresIn: '2d',
-  //     }),
-  //   ]);
-
-  //   return {
-  //     access_token: accessToken,
-  //     refresh_token: refreshToken,
-  //   };
-  // }
   private async generateTokens(user): Promise<Tokens> {
     const jwtPayload = { sub: user._id, email: user.email, name: user.name };
   
@@ -205,25 +185,89 @@ export class UsersService {
     return rest;
   }
 
-  async changePassword(oid, oldPassword: string, newPassword: string) {
-    const user = await this.userModel.findOne({ oid });
+  async changePassword(email: string, oldPassword: string, newPassword: string) {
+    try {
+      // Verifica si el usuario existe
+      const user = await this.userModel.findOne({ email });
+      if (!user) {
+        console.log('Usuario no encontrado.');
+        throw new NotFoundException('Usuario no encontrado.');
+      }
 
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado.');
-    }
-    const isPasswordValid = await bcryp.compare(oldPassword, user.password);
-    if (!isPasswordValid) {
-      throw new HttpException('Contraseña invalida', HttpStatus.UNAUTHORIZED);
-    }
+      // Verifica la contraseña actual
+      const isPasswordValid = await bcryp.compare(oldPassword, user.password);
+      if (!isPasswordValid) {
+        console.log('Contraseña invalida');
+        throw new HttpException('Contraseña invalida', HttpStatus.UNAUTHORIZED);
+      }
 
-    const newHashedPassword = await bcryp.hash(newPassword, 10);
-    user.password = newHashedPassword;
-    await user.save();
-    return {
-      status: 200,
-      message: '¡Cambio de clave éxitoso!',
-    };
+      // Hashea la nueva contraseña
+      const newHashedPassword = await bcryp.hash(newPassword, 10);
+      user.password = newHashedPassword;
+      await user.save();
+
+      console.log('¡Cambio de clave éxitoso!');
+      return {
+        status: 200,
+        message: '¡Cambio de clave éxitoso!',
+      };
+    } catch (error) {
+      console.error('Error cambiando la contraseña:', error);
+      throw new HttpException('Error en el servidor', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
+
+  // async changePassword(oid, oldPassword: string, newPassword: string) {
+  //   const user = await this.userModel.findOne({ oid });
+
+  //   if (!user) {
+  //     throw new NotFoundException('Usuario no encontrado.');
+  //   }
+  //   const isPasswordValid = await bcryp.compare(oldPassword, user.password);
+  //   if (!isPasswordValid) {
+  //     throw new HttpException('Contraseña invalida', HttpStatus.UNAUTHORIZED);
+  //   }
+
+  //   const newHashedPassword = await bcryp.hash(newPassword, 10);
+  //   user.password = newHashedPassword;
+  //   await user.save();
+  //   return {
+  //     status: 200,
+  //     message: '¡Cambio de clave éxitoso!',
+  //   };
+  // }
+
+  // async changePassword(id: string, oldPassword: string, newPassword: string) {
+  //   try {
+  //     // Verifica si el usuario existe
+  //     const user = await this.userModel.findById(id);
+  //     if (!user) {
+  //       console.log('Usuario no encontrado.');
+  //       throw new NotFoundException('Usuario no encontrado.');
+  //     }
+
+  //     // Verifica la contraseña actual
+  //     const isPasswordValid = await bcryp.compare(oldPassword, user.password);
+  //     if (!isPasswordValid) {
+  //       console.log('Contraseña invalida');
+  //       throw new HttpException('Contraseña invalida', HttpStatus.UNAUTHORIZED);
+  //     }
+
+  //     // Hashea la nueva contraseña
+  //     const newHashedPassword = await bcryp.hash(newPassword, 10);
+  //     user.password = newHashedPassword;
+  //     await user.save();
+
+  //     console.log('¡Cambio de clave éxitoso!');
+  //     return {
+  //       status: 200,
+  //       message: '¡Cambio de clave éxitoso!',
+  //     };
+  //   } catch (error) {
+  //     console.error('Error cambiando la contraseña:', error);
+  //     throw new HttpException('Error en el servidor', HttpStatus.INTERNAL_SERVER_ERROR);
+  //   }
+  // }
 
   async resetPassword(newPassword: string, resetToken: string) {
     const token = await this.ResetTokenModel.findOne({

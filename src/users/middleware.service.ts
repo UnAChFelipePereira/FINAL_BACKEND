@@ -8,7 +8,11 @@ export class AuthMiddleware implements NestMiddleware {
   constructor(private readonly userService: UsersService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const publicRoutes = ['/users/register', '/users/login', 'users/activate-account'];
+    const publicRoutes = [
+      '/users/register',
+      '/users/login',
+      '/users/activate-account'
+    ];
 
     if (publicRoutes.includes(req.path)) {
       return next();
@@ -25,9 +29,10 @@ export class AuthMiddleware implements NestMiddleware {
       if (!user) {
         throw new UnauthorizedException('Invalid token');
       }
-      req.user = user;
+      req.user = user; // Adjunta el usuario a la solicitud
       next();
     } catch (error) {
+      console.error('Error en el middleware de autenticación:', error);
       throw new UnauthorizedException('Invalid token');
     }
   }

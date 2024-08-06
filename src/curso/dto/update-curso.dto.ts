@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateCursoDto {
+export class UpdateCursoDto  {
   @IsString()
   @IsNotEmpty()
   readonly nombre_curso: string;

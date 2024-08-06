@@ -311,7 +311,6 @@ export class Curso {
   @Prop({ required: true })
   archivo_pt4Nombre: string;
 
-
   @Prop({ required: true })
   descripcionpt4: string;
 

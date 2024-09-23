@@ -320,12 +320,12 @@ export class UsersService {
   async enrollUserInCurso(userId: string, cursoId: string) {
     const user = await this.userModel.findById(userId);
     if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+      throw new NotFoundException(`Usuaro con id:  ${userId} no disponible`);
     }
 
     const curso = await this.cursoModel.findById(cursoId);
     if (!curso) {
-      throw new NotFoundException(`Curso with ID ${cursoId} not found`);
+      throw new NotFoundException(`Curso con id: ${cursoId} no disponible`);
     }
 
     user.cursosInscritos.push(cursoId);
@@ -342,10 +342,17 @@ export class UsersService {
   }
 
   // Métodos adicionales para buscar usuario y curso
-  async findUserById(userId: string) {
-    return this.userModel.findById(userId).exec();
+  // async findUserById(userId: string) {
+  //   return this.userModel.findById(userId).exec();
+  // }
+  async findUserById(id: string): Promise<UserDocument> {
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    }
+    return user;
   }
-
+  
   async findCursoById(cursoId: string) {
     return this.cursoModel.findById(cursoId).exec();
   }

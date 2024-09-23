@@ -12,7 +12,13 @@ export class Curso {
   nombre_profesor: string;
 
   @Prop({ required: true })
+  userEmail: string;
+
+  @Prop({ required: true })
   descripcion: string;
+
+  @Prop({ required: true })
+  tiempoestimado: number;
 
   @Prop({ required: false })
   iconocurso: string;
@@ -499,6 +505,9 @@ export class Curso {
 
   @Prop({ required: true })
   respuestacorrectap5pt5: string;
+
+  @Prop({ default: true })
+  estado: boolean;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
   enrolledUsers: Types.ObjectId[];

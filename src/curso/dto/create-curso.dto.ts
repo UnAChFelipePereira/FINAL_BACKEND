@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateCursoDto {
   @IsString()
@@ -11,7 +11,15 @@ export class CreateCursoDto {
 
   @IsString()
   @IsNotEmpty()
+  readonly userEmail: string;
+
+  @IsString()
+  @IsNotEmpty()
   readonly descripcion: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  readonly tiempoestimado: number;
 
   @IsString()
   @IsNotEmpty()
@@ -672,4 +680,8 @@ export class CreateCursoDto {
   @IsString()
   @IsNotEmpty()
   readonly respuestacorrectap5pt5: string;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  readonly estado: boolean;
 }

@@ -132,7 +132,7 @@ export class UsersController {
   ) {
     try {
       const user = await this.usersService.enrollUserInCurso(userId, cursoId);
-      return { message: 'User enrolled in curso successfully', user };
+      return { message: 'Usuario inscrito.', user };
     } catch (error) {
       throw new NotFoundException(error.message);
     }
@@ -142,5 +142,14 @@ export class UsersController {
   @Get(':id/cursos-inscritos')
   async getEnrolledCursos(@Param('id') id: string) {
     return this.usersService.getEnrolledCursos(id);
+  }
+
+  @Get(':id')
+  async getUserById(@Param('id') id: string) {
+    const user = await this.usersService.findUserById(id);
+    if (!user) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    }
+    return user;
   }
 }

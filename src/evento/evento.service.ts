@@ -21,7 +21,7 @@ export class EventoService {
     const cursoActualizado = await this.eventoModel.findByIdAndUpdate(
       cursoId,
       { posicion_calendario: nuevaPosicion },
-      { new: true } // Devuelve el curso actualizado
+      { new: true } 
     );
     return cursoActualizado;
   }

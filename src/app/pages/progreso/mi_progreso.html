@@ -1,111 +1,163 @@
 <ul class="breadcrumb">
-  <ng-container *ngIf="selectedCursoData.length === 0; else breadcrumbConCurso">
-    <li class="breadcrumb-item"><a href="/inicio">Inicio</a></li>
-    <li class="breadcrumb-item active">
-      <a href="/ver_mi_progreso">Mi Progreso</a>
-    </li>
-  </ng-container>
-
-  <ng-template #breadcrumbConCurso>
-    <li class="breadcrumb-item"><a href="/inicio">Inicio</a></li>
-    <li class="breadcrumb-item active">
-      <a href="/ver_mi_progreso">Mi Progreso</a>
-    </li>
-    <li class="breadcrumb-item active">{{nombreCurso}}</li>
-  </ng-template>
+  <li class="breadcrumb-item"><a href="/inicio">Inicio</a></li>
+  <li class="breadcrumb-item"><a href="/ver_mi_progreso">Mi Progreso</a></li>
+  <li class="breadcrumb-item active">{{ courseTitle || "Detalle del curso" }}</li>
 </ul>
 
-<div *ngIf="selectedCursoData.length === 0">
-  <h1>No hay progreso en este curso :(</h1>
+<div *ngIf="loading" class="progress-empty-state">
+  <h1>Cargando tu reporte del curso...</h1>
 </div>
 
-<div *ngIf="selectedCursoData.length > 0">
-  <h1 class="page-header">Progreso en el curso: {{nombreCurso}}</h1>
-  <div class="row">
-    <div class="col-12">
-      <div id="apexChartColumnChart" class="mb-5">
-        <panel title="Panel Success" headerClass="bg-blue-700">
-          <apx-chart
-            [series]="chartOptions[0].series"
-            [chart]="chartOptions[0].chart"
-            [colors]="chartOptions[0].colors"
-            [legend]="chartOptions[0].legend"
-            [xaxis]="chartOptions[0].xaxis"
-            [yaxis]="chartOptions[0].yaxis"
-            [dataLabels]="chartOptions[0].dataLabels"
-            [grid]="chartOptions[0].grid"
-            [stroke]="chartOptions[0].stroke"
-            [title]="chartOptions[0].title"
-            [plotOptions]="chartOptions[0].plotOptions"
-            [fill]="chartOptions[0].fill"
-            [tooltip]="chartOptions[0].tooltip"
-          ></apx-chart>
-        </panel>
-      </div>
-    </div>
-  </div>
+<div *ngIf="!loading && !hasEnrollment" class="progress-empty-state">
+  <h1>Aún no existe una inscripción activa para este curso.</h1>
+  <p>Cuando te inscribas, aquí verás tu avance, puntajes por módulo y un resumen completo.</p>
+  <button type="button" class="btn btn-primary mt-3" (click)="goBack()">
+    Volver a Mi Progreso
+  </button>
+</div>
 
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-12">
-        <div class="row">
+<div *ngIf="!loading && hasEnrollment" class="progress-dashboard">
+  <section class="progress-hero">
+    <div class="hero-copy">
+      <button type="button" class="btn btn-outline-primary btn-sm mb-3" (click)="goBack()">
+        Volver
+      </button>
+      <h1 class="page-header mb-2">{{ courseTitle }}</h1>
+      <p class="hero-description">{{ courseDescription }}</p>
+      <div class="hero-progress">
+        <div class="hero-progress-copy">
+          <span>Avance general</span>
+          <strong>{{ enrollmentProgress }}%</strong>
+        </div>
+        <div class="progress hero-progress-bar">
           <div
-            class="col-xl-4 col-lg-6 col-md-12 mb-4"
-            *ngFor="let data of selectedCursoData"
-          >
-            <div class="stats-box">
-              <h3>{{ data.faseId }}</h3>
-              <p><strong>Tiempo en la fase:</strong> {{ data.totalTime }}</p>
-              <p><strong>Respuestas correctas:</strong> {{ data.correctas }}</p>
-              <p>
-                <strong>Respuestas incorrectas:</strong> {{ data.incorrectas }}
-              </p>
-              <p><strong>Nota:</strong> {{ data.nota }}</p>
-
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Pregunta 1</th>
-                    <th>Pregunta 2</th>
-                    <th>Pregunta 3</th>
-                    <th>Pregunta 4</th>
-                    <th>Pregunta 5</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <i
-                        [ngClass]="data.pregunta1 ? 'fa fa-check' : 'fa fa-times'"
-                      ></i>
-                    </td>
-                    <td>
-                      <i
-                        [ngClass]="data.pregunta2 ? 'fa fa-check' : 'fa fa-times'"
-                      ></i>
-                    </td>
-                    <td>
-                      <i
-                        [ngClass]="data.pregunta3 ? 'fa fa-check' : 'fa fa-times'"
-                      ></i>
-                    </td>
-                    <td>
-                      <i
-                        [ngClass]="data.pregunta4 ? 'fa fa-check' : 'fa fa-times'"
-                      ></i>
-                    </td>
-                    <td>
-                      <i
-                        [ngClass]="data.pregunta5 ? 'fa fa-check' : 'fa fa-times'"
-                      ></i>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+            class="progress-bar"
+            role="progressbar"
+            [style.width.%]="enrollmentProgress"
+            [attr.aria-valuenow]="enrollmentProgress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          ></div>
         </div>
       </div>
     </div>
-  </div>
+    <div class="hero-card">
+      <div class="hero-stat">
+        <span>Puntaje acumulado</span>
+        <strong>{{ totalScore }} / {{ totalPossibleScore }}</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Logro global</span>
+        <strong>{{ scorePercent }}%</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Módulos completados</span>
+        <strong>{{ completedModules }} / {{ modules.length }}</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Tasa de aprobación</span>
+        <strong>{{ approvalRate }}%</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="metrics-grid">
+    <article class="metric-card">
+      <span class="metric-label">Promedio por módulo</span>
+      <strong>{{ averageModuleScore }}%</strong>
+    </article>
+    <article class="metric-card">
+      <span class="metric-label">Tiempo invertido</span>
+      <strong>{{ totalTimeSpentMinutes }} min</strong>
+    </article>
+    <article class="metric-card">
+      <span class="metric-label">Módulos aprobados</span>
+      <strong>{{ approvedModules }}</strong>
+    </article>
+    <article class="metric-card">
+      <span class="metric-label">Módulos pendientes</span>
+      <strong>{{ pendingModules }}</strong>
+    </article>
+  </section>
+
+  <section class="row g-4 mb-4">
+    <div class="col-xl-8">
+      <div class="report-card chart-card">
+        <div class="card-heading">
+          <h3>Rendimiento por módulo</h3>
+          <p>Vista rápida del porcentaje de logro en cada etapa del curso.</p>
+        </div>
+        <apx-chart
+          *ngIf="scoreChartOptions"
+          [series]="scoreChartOptions.series"
+          [chart]="scoreChartOptions.chart"
+          [colors]="scoreChartOptions.colors"
+          [xaxis]="scoreChartOptions.xaxis"
+          [yaxis]="scoreChartOptions.yaxis"
+          [dataLabels]="scoreChartOptions.dataLabels"
+          [grid]="scoreChartOptions.grid"
+          [plotOptions]="scoreChartOptions.plotOptions"
+          [tooltip]="scoreChartOptions.tooltip"
+        ></apx-chart>
+      </div>
+    </div>
+    <div class="col-xl-4">
+      <div class="report-card chart-card">
+        <div class="card-heading">
+          <h3>Estado del avance</h3>
+          <p>Cuánto del curso ya terminaste y qué queda pendiente.</p>
+        </div>
+        <apx-chart
+          *ngIf="statusChartOptions"
+          [series]="statusChartOptions.series"
+          [chart]="statusChartOptions.chart"
+          [labels]="statusChartOptions.labels"
+          [colors]="statusChartOptions.colors"
+          [legend]="statusChartOptions.legend"
+          [dataLabels]="statusChartOptions.dataLabels"
+          [stroke]="statusChartOptions.stroke"
+          [tooltip]="statusChartOptions.tooltip"
+        ></apx-chart>
+      </div>
+    </div>
+  </section>
+
+  <section class="report-card">
+    <div class="card-heading">
+      <h3>Detalle por módulo</h3>
+      <p>Aquí puedes revisar cómo te ha ido en cada módulo del curso.</p>
+    </div>
+    <div *ngIf="modules.length === 0" class="progress-empty-state compact">
+      <p>Este curso todavía no tiene módulos configurados.</p>
+    </div>
+    <div *ngIf="modules.length > 0" class="module-grid">
+      <article class="module-card" *ngFor="let module of modules">
+        <div class="module-card-header">
+          <div>
+            <h4>{{ module.titulo }}</h4>
+            <span [class]="getStatusClass(module)">{{ getStatusLabel(module) }}</span>
+          </div>
+          <strong class="module-score">{{ module.porcentajeLogro }}%</strong>
+        </div>
+        <div class="module-progress">
+          <div class="progress">
+            <div
+              class="progress-bar"
+              role="progressbar"
+              [style.width.%]="module.porcentajeLogro"
+              [attr.aria-valuenow]="module.porcentajeLogro"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            ></div>
+          </div>
+        </div>
+        <div class="module-meta">
+          <span>Puntaje: {{ module.puntajeObtenido }} / {{ module.puntajeTotal }}</span>
+          <span>Inicio: {{ formatDate(module.fechaInicio) }}</span>
+          <span>Fin: {{ formatDate(module.fechaTermino) }}</span>
+          <span>Duración: {{ module.duracionMinutos ? (module.duracionMinutos + ' min') : 'Sin registro' }}</span>
+        </div>
+      </article>
+    </div>
+  </section>
 </div>

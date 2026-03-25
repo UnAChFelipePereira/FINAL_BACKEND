@@ -4,437 +4,144 @@ import {
   HttpErrorResponse,
   HttpHeaders,
 } from "@angular/common/http";
-import { Observable, catchError, last, tap, throwError } from "rxjs";
+import {
+  Observable,
+  catchError,
+  firstValueFrom,
+  forkJoin,
+  map,
+  of,
+  switchMap,
+  tap,
+  throwError,
+} from "rxjs";
 import {
   CanActivate,
   ActivatedRouteSnapshot,
   RouterStateSnapshot,
   Router,
 } from "@angular/router";
+import { environment } from "../../../environments/environment";
+import { AuthSessionService } from "../../core/services/auth-session.service";
+import { CurrentUser } from "../../core/models/current-user.model";
 import { Curso } from "../../pages/vercursos/curso.model";
-import { ProgresoEstudiantes } from "../../pages/progreso/progreso.model";
+import { CourseEnrollment } from "../../models/entities/course-enrollment.model";
+
+interface LegacyLoginResponse {
+  access_token?: string;
+  accessToken?: string;
+  token?: string;
+  user?: {
+    _id?: string;
+    id?: string;
+    email: string;
+    role?: string;
+    rol?: string;
+    name?: string;
+    nombre?: string;
+    lastname?: string;
+    apellido?: string;
+    activo?: boolean;
+  };
+}
 
 @Injectable({
   providedIn: "root",
 })
 export class AuthService implements CanActivate {
-  access_token = "";
+  private readonly apiUrl = environment.apiUrl;
 
-  private apiUrllogin = "http://localhost:3000/users/login";
-  private apiUrlregister = "http://localhost:3000/users/register";
-  private apiUrlperfil = "http://localhost:3000/users/perfil";
-  private apiUrlforgot = "http://localhost:3000/users/forgot-password";
-  private apiUrlreset = "http://localhost:3000/users/reset-password";
-  private apiUlrchange = "http://localhost:3000/users/change-password";
-  private apiUrlfoto = "http://localhost:3000/users/upload-profile-picture";
-  private apiUrlCurso = "http://localhost:3000/cursos/create";
-  private apiUrlBuscarCurso = "http://localhost:3000/cursos/buscar-curso";
-  private baseCursos = "http://localhost:3000/users";
-  private baseCurso = "http://localhost:3000/cursos";
-  private event = "http://localhost:3000/eventos/crear";
-  private eventos = "http://localhost:3000/eventos";
-  private primerafase = "http://localhost:3000/primerafase/crear";
-  private primerafasecheck = "http://localhost:3000/primerafase";
-  private obtenerdatos = "http://localhost:3000/primerafase";
-  private buscarDatosCursos = "http://localhost:3000/primerafase";
-  private subir = "http://localhost:3000/files/upload";
+  private readonly apiUrllogin = `${this.apiUrl}/users/login`;
+  private readonly apiUrlregister = `${this.apiUrl}/users`;
+  private readonly apiUrlActivateAccount = `${this.apiUrl}/users/activate-account`;
+  private readonly apiUrlperfil = `${this.apiUrl}/users/perfil`;
+  private readonly apiUrlforgot = `${this.apiUrl}/users/forgot-password`;
+  private readonly apiUrlreset = `${this.apiUrl}/users/reset-password`;
+  private readonly apiUrlchange = `${this.apiUrl}/users/change-password`;
+  private readonly apiUrlfoto = `${this.apiUrl}/users/upload-profile-picture`;
+  private readonly apiUrlUsers = `${this.apiUrl}/users`;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  private readonly apiUrlLegacyCourses = `${this.apiUrl}/cursos`;
+  private readonly apiUrlCourses = `${this.apiUrl}/courses`;
+  private readonly apiUrlEventos = `${this.apiUrl}/eventos`;
+  private readonly apiUrlPrimerafase = `${this.apiUrl}/primerafase`;
+  private readonly apiUrlFilesUpload = `${this.apiUrl}/files/upload`;
+  private readonly apiUrlFiles = `${this.apiUrl}/files`;
+
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private authSessionService: AuthSessionService
+  ) {}
 
   register(
-    name: string,
-    lastname: string,
+    nombre: string,
+    apellido: string,
     email: string,
-    password: string,
-    rol: string
+    password: string
   ): Observable<any> {
-    return this.http.post<any>(`${this.apiUrlregister}`, {
-      name,
-      email,
-      lastname,
+    const normalizedEmail = (email || "").trim().toLowerCase();
+    const resolvedRole = this.resolveRoleByEmail(normalizedEmail);
+
+    if (!resolvedRole) {
+      return throwError(
+        () => new Error("El correo debe pertenecer a @unach.cl o @alu.unach.cl.")
+      );
+    }
+
+    return this.http.post<any>(this.apiUrlregister, {
+      email: normalizedEmail,
+      nombre,
+      apellido,
       password,
-      rol,
+      rol: resolvedRole,
+      activo: false,
     });
   }
 
-  crearcurso(
-    nombre_curso: string,
-    nombre_profesor: string,
-    userEmail: string,
-    descripcion: string,
-    tiempoestimado: number,
-    iconocursoNombre: string,
-    archivo_pt1Nombre: string,
-    descripcionpt1: string,
-    pregunta1pt1: string,
-    respuesta1p1pt1: string,
-    respuesta2p1pt1: string,
-    respuesta3p1pt1: string,
-    respuesta4p1pt1: string,
-    respuestacorrectap1pt1: string,
-    pregunta2pt1: string,
-    respuesta1p2pt1: string,
-    respuesta2p2pt1: string,
-    respuesta3p2pt1: string,
-    respuesta4p2pt1: string,
-    respuestacorrectap2pt1: string,
-    pregunta3pt1: string,
-    respuesta1p3pt1: string,
-    respuesta2p3pt1: string,
-    respuesta3p3pt1: string,
-    respuesta4p3pt1: string,
-    respuestacorrectap3pt1: string,
-    pregunta4pt1: string,
-    respuesta1p4pt1: string,
-    respuesta2p4pt1: string,
-    respuesta3p4pt1: string,
-    respuesta4p4pt1: string,
-    respuestacorrectap4pt1: string,
-    pregunta5pt1: string,
-    respuesta1p5pt1: string,
-    respuesta2p5pt1: string,
-    respuesta3p5pt1: string,
-    respuesta4p5pt1: string,
-    respuestacorrectap5pt1: string,
-    archivo_pt2Nombre: string,
-    descripcionpt2: string,
-    pregunta1pt2: string,
-    respuesta1p1pt2: string,
-    respuesta2p1pt2: string,
-    respuesta3p1pt2: string,
-    respuesta4p1pt2: string,
-    respuestacorrectap1pt2: string,
-    pregunta2pt2: string,
-    respuesta1p2pt2: string,
-    respuesta2p2pt2: string,
-    respuesta3p2pt2: string,
-    respuesta4p2pt2: string,
-    respuestacorrectap2pt2: string,
-    pregunta3pt2: string,
-    respuesta1p3pt2: string,
-    respuesta2p3pt2: string,
-    respuesta3p3pt2: string,
-    respuesta4p3pt2: string,
-    respuestacorrectap3pt2: string,
-    pregunta4pt2: string,
-    respuesta1p4pt2: string,
-    respuesta2p4pt2: string,
-    respuesta3p4pt2: string,
-    respuesta4p4pt2: string,
-    respuestacorrectap4pt2: string,
-    pregunta5pt2: string,
-    respuesta1p5pt2: string,
-    respuesta2p5pt2: string,
-    respuesta3p5pt2: string,
-    respuesta4p5pt2: string,
-    respuestacorrectap5pt2: string,
-    archivo_pt3Nombre: string,
-    descripcionpt3: string,
-    pregunta1pt3: string,
-    respuesta1p1pt3: string,
-    respuesta2p1pt3: string,
-    respuesta3p1pt3: string,
-    respuesta4p1pt3: string,
-    respuestacorrectap1pt3: string,
-    pregunta2pt3: string,
-    respuesta1p2pt3: string,
-    respuesta2p2pt3: string,
-    respuesta3p2pt3: string,
-    respuesta4p2pt3: string,
-    respuestacorrectap2pt3: string,
-    pregunta3pt3: string,
-    respuesta1p3pt3: string,
-    respuesta2p3pt3: string,
-    respuesta3p3pt3: string,
-    respuesta4p3pt3: string,
-    respuestacorrectap3pt3: string,
-    pregunta4pt3: string,
-    respuesta1p4pt3: string,
-    respuesta2p4pt3: string,
-    respuesta3p4pt3: string,
-    respuesta4p4pt3: string,
-    respuestacorrectap4pt3: string,
-    pregunta5pt3: string,
-    respuesta1p5pt3: string,
-    respuesta2p5pt3: string,
-    respuesta3p5pt3: string,
-    respuesta4p5pt3: string,
-    respuestacorrectap5pt3: string,
-    archivo_pt4Nombre: string,
-    descripcionpt4: string,
-    pregunta1pt4: string,
-    respuesta1p1pt4: string,
-    respuesta2p1pt4: string,
-    respuesta3p1pt4: string,
-    respuesta4p1pt4: string,
-    respuestacorrectap1pt4: string,
-    pregunta2pt4: string,
-    respuesta1p2pt4: string,
-    respuesta2p2pt4: string,
-    respuesta3p2pt4: string,
-    respuesta4p2pt4: string,
-    respuestacorrectap2pt4: string,
-    pregunta3pt4: string,
-    respuesta1p3pt4: string,
-    respuesta2p3pt4: string,
-    respuesta3p3pt4: string,
-    respuesta4p3pt4: string,
-    respuestacorrectap3pt4: string,
-    pregunta4pt4: string,
-    respuesta1p4pt4: string,
-    respuesta2p4pt4: string,
-    respuesta3p4pt4: string,
-    respuesta4p4pt4: string,
-    respuestacorrectap4pt4: string,
-    pregunta5pt4: string,
-    respuesta1p5pt4: string,
-    respuesta2p5pt4: string,
-    respuesta3p5pt4: string,
-    respuesta4p5pt4: string,
-    respuestacorrectap5pt4: string,
-    archivo_pt5Nombre: string,
-    descripcionpt5: string,
-    pregunta1pt5: string,
-    respuesta1p1pt5: string,
-    respuesta2p1pt5: string,
-    respuesta3p1pt5: string,
-    respuesta4p1pt5: string,
-    respuestacorrectap1pt5: string,
-    pregunta2pt5: string,
-    respuesta1p2pt5: string,
-    respuesta2p2pt5: string,
-    respuesta3p2pt5: string,
-    respuesta4p2pt5: string,
-    respuestacorrectap2pt5: string,
-    pregunta3pt5: string,
-    respuesta1p3pt5: string,
-    respuesta2p3pt5: string,
-    respuesta3p3pt5: string,
-    respuesta4p3pt5: string,
-    respuestacorrectap3pt5: string,
-    pregunta4pt5: string,
-    respuesta1p4pt5: string,
-    respuesta2p4pt5: string,
-    respuesta3p4pt5: string,
-    respuesta4p4pt5: string,
-    respuestacorrectap4pt5: string,
-    pregunta5pt5: string,
-    respuesta1p5pt5: string,
-    respuesta2p5pt5: string,
-    respuesta3p5pt5: string,
-    respuesta4p5pt5: string,
-    respuestacorrectap5pt5: string,
-    estado: boolean
-  ) {
-    return this.http.post<any>(`${this.apiUrlCurso}`, {
-      nombre_curso,
-      nombre_profesor,
-      userEmail,
-      descripcion,
-      tiempoestimado,
-      iconocursoNombre,
-      archivo_pt1Nombre,
-      descripcionpt1,
-      pregunta1pt1,
-      respuesta1p1pt1,
-      respuesta2p1pt1,
-      respuesta3p1pt1,
-      respuesta4p1pt1,
-      respuestacorrectap1pt1,
-      pregunta2pt1,
-      respuesta1p2pt1,
-      respuesta2p2pt1,
-      respuesta3p2pt1,
-      respuesta4p2pt1,
-      respuestacorrectap2pt1,
-      pregunta3pt1,
-      respuesta1p3pt1,
-      respuesta2p3pt1,
-      respuesta3p3pt1,
-      respuesta4p3pt1,
-      respuestacorrectap3pt1,
-      pregunta4pt1,
-      respuesta1p4pt1,
-      respuesta2p4pt1,
-      respuesta3p4pt1,
-      respuesta4p4pt1,
-      respuestacorrectap4pt1,
-      pregunta5pt1,
-      respuesta1p5pt1,
-      respuesta2p5pt1,
-      respuesta3p5pt1,
-      respuesta4p5pt1,
-      respuestacorrectap5pt1,
-      archivo_pt2Nombre,
-      descripcionpt2,
-      pregunta1pt2,
-      respuesta1p1pt2,
-      respuesta2p1pt2,
-      respuesta3p1pt2,
-      respuesta4p1pt2,
-      respuestacorrectap1pt2,
-      pregunta2pt2,
-      respuesta1p2pt2,
-      respuesta2p2pt2,
-      respuesta3p2pt2,
-      respuesta4p2pt2,
-      respuestacorrectap2pt2,
-      pregunta3pt2,
-      respuesta1p3pt2,
-      respuesta2p3pt2,
-      respuesta3p3pt2,
-      respuesta4p3pt2,
-      respuestacorrectap3pt2,
-      pregunta4pt2,
-      respuesta1p4pt2,
-      respuesta2p4pt2,
-      respuesta3p4pt2,
-      respuesta4p4pt2,
-      respuestacorrectap4pt2,
-      pregunta5pt2,
-      respuesta1p5pt2,
-      respuesta2p5pt2,
-      respuesta3p5pt2,
-      respuesta4p5pt2,
-      respuestacorrectap5pt2,
-      archivo_pt3Nombre,
-      descripcionpt3,
-      pregunta1pt3,
-      respuesta1p1pt3,
-      respuesta2p1pt3,
-      respuesta3p1pt3,
-      respuesta4p1pt3,
-      respuestacorrectap1pt3,
-      pregunta2pt3,
-      respuesta1p2pt3,
-      respuesta2p2pt3,
-      respuesta3p2pt3,
-      respuesta4p2pt3,
-      respuestacorrectap2pt3,
-      pregunta3pt3,
-      respuesta1p3pt3,
-      respuesta2p3pt3,
-      respuesta3p3pt3,
-      respuesta4p3pt3,
-      respuestacorrectap3pt3,
-      pregunta4pt3,
-      respuesta1p4pt3,
-      respuesta2p4pt3,
-      respuesta3p4pt3,
-      respuesta4p4pt3,
-      respuestacorrectap4pt3,
-      pregunta5pt3,
-      respuesta1p5pt3,
-      respuesta2p5pt3,
-      respuesta3p5pt3,
-      respuesta4p5pt3,
-      respuestacorrectap5pt3,
-      archivo_pt4Nombre,
-      descripcionpt4,
-      pregunta1pt4,
-      respuesta1p1pt4,
-      respuesta2p1pt4,
-      respuesta3p1pt4,
-      respuesta4p1pt4,
-      respuestacorrectap1pt4,
-      pregunta2pt4,
-      respuesta1p2pt4,
-      respuesta2p2pt4,
-      respuesta3p2pt4,
-      respuesta4p2pt4,
-      respuestacorrectap2pt4,
-      pregunta3pt4,
-      respuesta1p3pt4,
-      respuesta2p3pt4,
-      respuesta3p3pt4,
-      respuesta4p3pt4,
-      respuestacorrectap3pt4,
-      pregunta4pt4,
-      respuesta1p4pt4,
-      respuesta2p4pt4,
-      respuesta3p4pt4,
-      respuesta4p4pt4,
-      respuestacorrectap4pt4,
-      pregunta5pt4,
-      respuesta1p5pt4,
-      respuesta2p5pt4,
-      respuesta3p5pt4,
-      respuesta4p5pt4,
-      respuestacorrectap5pt4,
-      archivo_pt5Nombre,
-      descripcionpt5,
-      pregunta1pt5,
-      respuesta1p1pt5,
-      respuesta2p1pt5,
-      respuesta3p1pt5,
-      respuesta4p1pt5,
-      respuestacorrectap1pt5,
-      pregunta2pt5,
-      respuesta1p2pt5,
-      respuesta2p2pt5,
-      respuesta3p2pt5,
-      respuesta4p2pt5,
-      respuestacorrectap2pt5,
-      pregunta3pt5,
-      respuesta1p3pt5,
-      respuesta2p3pt5,
-      respuesta3p3pt5,
-      respuesta4p3pt5,
-      respuestacorrectap3pt5,
-      pregunta4pt5,
-      respuesta1p4pt5,
-      respuesta2p4pt5,
-      respuesta3p4pt5,
-      respuesta4p4pt5,
-      respuestacorrectap4pt5,
-      pregunta5pt5,
-      respuesta1p5pt5,
-      respuesta2p5pt5,
-      respuesta3p5pt5,
-      respuesta4p5pt5,
-      respuestacorrectap5pt5,
-      estado,
-    });
-  }
+  login(email: string, password: string): Observable<LegacyLoginResponse> {
+    return this.http
+      .post<LegacyLoginResponse>(this.apiUrllogin, { email, password })
+      .pipe(
+        switchMap(async (response) => {
+          const accessToken =
+            response.access_token || response.accessToken || response.token || "";
+          const rawUser = response.user;
+          const resolvedUserId = await this.resolveRelationalUserId(
+            rawUser?.id || rawUser?._id || "",
+            rawUser?.email || email
+          );
 
-  getCursos(): Observable<Curso[]> {
-    return this.http.get<Curso[]>(this.apiUrlBuscarCurso);
-  }
-  getIdCursos() {
-    return this.http.get<{ data: Curso[] }>(`${this.baseCursos}`);
+          const user: CurrentUser | null = rawUser
+            ? {
+                id: resolvedUserId,
+                email: rawUser.email,
+                nombre: rawUser.nombre || rawUser.name || "",
+                apellido: rawUser.apellido || rawUser.lastname || "",
+                rol: (rawUser.rol || rawUser.role || "estudiante") as CurrentUser["rol"],
+                activo: rawUser.activo ?? true,
+              }
+            : null;
+
+          if (accessToken) {
+            this.authSessionService.setSession({
+              accessToken,
+              user,
+            });
+          }
+
+          if (rawUser?.role) {
+            localStorage.setItem("userRole", rawUser.role);
+          }
+          return response;
+        })
+      );
   }
 
   activateAccount(token: string): Observable<any> {
     return this.http
-      .get<any>(`${this.baseCursos}/activate-account`, { params: { token } })
+      .post<any>(this.apiUrlActivateAccount, { token })
       .pipe(catchError(this.handleErrors));
-  }
-
-  private handleErrors(error: HttpErrorResponse) {
-    let errorMessage = "An unknown error occurred!";
-    if (error.error instanceof ErrorEvent) {
-      errorMessage = `Error: ${error.error.message}`;
-    } else {
-      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
-    }
-    return throwError(() => new Error(errorMessage));
-  }
-
-  login(email: string, password: string): Observable<any> {
-    return this.http.post(`${this.apiUrllogin}`, { email, password }).pipe(
-      tap((response: any) => {
-        localStorage.setItem("access_token", response.access_token);
-        localStorage.setItem("userRole", response.user.role);
-        localStorage.setItem("userEmail", response.user.email);
-        localStorage.setItem("userName", response.user.name);
-        localStorage.setItem("userLastName", response.user.lastname);
-        localStorage.setItem("user", JSON.stringify(response.user));
-      })
-    );
-  }
-
-  private handleError(error: HttpErrorResponse) {
-    return throwError(() => error);
   }
 
   perfil(
@@ -456,7 +163,7 @@ export class AuthService implements CanActivate {
   }
 
   forgotPassword(email: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrlforgot}`, { email });
+    return this.http.post<any>(this.apiUrlforgot, { email });
   }
 
   changePassword(
@@ -464,7 +171,7 @@ export class AuthService implements CanActivate {
     oldPassword: string,
     newPassword: string
   ): Observable<any> {
-    return this.http.put<any>(`${this.apiUlrchange}`, {
+    return this.http.put<any>(this.apiUrlchange, {
       email,
       oldPassword,
       newPassword,
@@ -472,7 +179,7 @@ export class AuthService implements CanActivate {
   }
 
   resetPassword(newPassword: string, resetToken: string): Observable<any> {
-    return this.http.put<any>(`${this.apiUrlreset}`, {
+    return this.http.put<any>(this.apiUrlreset, {
       newPassword,
       resetToken,
     });
@@ -482,90 +189,148 @@ export class AuthService implements CanActivate {
     const formData = new FormData();
     formData.append("profilePic", file);
 
-    return this.http.post<any>(`${this.apiUrlfoto}`, formData);
+    return this.http.post<any>(this.apiUrlfoto, formData);
   }
 
   getUserById(userId: string): Observable<any> {
-    return this.http.get<any>(`${this.baseCursos}/${userId}`);
+    return this.http.get<any>(`${this.apiUrlUsers}/${userId}`);
   }
 
-  logout() {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userLastName");
-    localStorage.removeItem("userProfilePic");
-
-    this.router.navigate(["/login"]);
+  getCursos(): Observable<Curso[]> {
+    return forkJoin({
+      courses: this.http.get<any[]>(this.apiUrlCourses),
+      users: this.http.get<any[]>(this.apiUrlUsers).pipe(catchError(() => of([]))),
+      files: this.http.get<any[]>(this.apiUrlFiles).pipe(catchError(() => of([]))),
+    }).pipe(
+      map(({ courses, users, files }) =>
+        courses.map((course) => this.mapCourseToLegacy(course, users, files))
+      )
+    );
   }
-
-  canActivate(
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
-  ): boolean {
-    const token = localStorage.getItem("access_token");
-
-    if (token && token.trim() !== "") {
-      const expectedRole = route.data.expectedRole;
-      if (expectedRole) {
-        const currentUserRole = this.getCurrentUserRole();
-        if (currentUserRole !== expectedRole) {
-          console.log(
-            `Acceso denegado. Rol esperado: ${expectedRole}, Rol del usuario: ${currentUserRole}`
-          );
-          this.router.navigate(["/inicio"]);
-          return false;
-        }
-      }
-      console.log("Usuario autenticado. Permitiendo acceso.");
-      return true;
-    } else {
-      console.log("No se ha detectado ningún token. Redirigiendo al login.");
-      this.router.navigate(["/login"]);
-      return false;
-    }
+  getIdCursos(): Observable<any> {
+    return this.http.get<any>(this.apiUrlUsers);
   }
 
   deleteCursoById(cursoId: string): Observable<any> {
-    return this.http.delete(`${this.baseCurso}/${cursoId}`);
+    return this.http.delete(`${this.apiUrlCourses}/${cursoId}`);
   }
 
   getCursoById(cursoId: string): Observable<any> {
-    return this.http.get<any>(`${this.baseCurso}/${cursoId}`);
+    return forkJoin({
+      course: this.http.get<any>(`${this.apiUrlCourses}/${cursoId}`),
+      users: this.http.get<any[]>(this.apiUrlUsers).pipe(catchError(() => of([]))),
+      files: this.http.get<any[]>(this.apiUrlFiles).pipe(catchError(() => of([]))),
+    }).pipe(map(({ course, users, files }) => this.mapCourseToLegacy(course, users, files)));
+  }
+  updateCurso(id: string, cursoData: any): Observable<any> {
+    return this.http.patch(`${this.apiUrlCourses}/${id}`, cursoData);
   }
 
-  enrollUserInCurso(userId: string, cursoId: string) {
-    return this.http.post<any>(
-      `${this.baseCursos}/${userId}/enroll/${cursoId}`,
-      { userId, cursoId }
+  updateCursoEstado(cursoId: string, estado: boolean): Observable<any> {
+    return this.http.patch(`${this.apiUrlCourses}/${cursoId}`, { activo: estado });
+  }
+
+  enrollUserInCurso(userId: string, cursoId: string): Observable<any> {
+    const providedUserId =
+      userId || this.authSessionService.currentUser?.id || localStorage.getItem("user_Id") || "";
+    const normalizedCourseId = this.normalizeNumericId(cursoId);
+
+    if (!normalizedCourseId) {
+      return throwError(
+        () =>
+          new Error(
+            "No se encontrÃƒÂ³ un courseId relacional vÃƒÂ¡lido para la inscripciÃƒÂ³n."
+          )
+      );
+    }
+
+    return this.resolveEnrollmentUserId(providedUserId).pipe(
+      switchMap((normalizedUserId) => {
+        if (!normalizedUserId) {
+          return throwError(
+            () =>
+              new Error(
+                "No se encontrÃƒÂ³ un userId relacional vÃƒÂ¡lido para inscribir al usuario."
+              )
+          );
+        }
+
+        return this.http.post<any>(`${this.apiUrl}/course-enrollments`, {
+          userId: normalizedUserId,
+          courseId: normalizedCourseId,
+          fechaInscripcion: new Date().toISOString(),
+          estado: "inscrito",
+          progreso: 0,
+        });
+      })
     );
   }
 
   getEnrolledCursos(userId: string): Observable<any> {
-    return this.http.get<any>(`${this.baseCursos}/${userId}/cursos-inscritos`);
+    const providedUserId =
+      userId || this.authSessionService.currentUser?.id || localStorage.getItem("user_Id") || "";
+
+    return this.resolveEnrollmentUserId(providedUserId).pipe(
+      switchMap((normalizedUserId) => {
+        if (!normalizedUserId) {
+          return of({ cursosInscritos: [] });
+        }
+
+        return this.http.get<CourseEnrollment[]>(`${this.apiUrl}/course-enrollments`).pipe(
+          map((enrollments) => ({
+            cursosInscritos: enrollments
+              .filter(
+                (enrollment) =>
+                  this.normalizeNumericId(enrollment.userId) === normalizedUserId
+              )
+              .map((enrollment) => enrollment.courseId),
+          }))
+        );
+      })
+    );
   }
 
   getCursosInscritos(userId: string): Observable<any> {
-    return this.http.get<any>(`${this.baseCursos}/${userId}/cursos-inscritos`);
+    return this.getEnrolledCursos(userId);
   }
 
-  updateCurso(id: string, cursoData: any): Observable<any> {
-    return this.http.put(`${this.baseCurso}/${id}`, cursoData);
+  crearcurso(...args: any[]): Observable<any> {
+    const [
+      nombre,
+      ,
+      ,
+      descripcionGeneral,
+      ,
+      iconFileId,
+      ...rest
+    ] = args;
+
+    const creadoPorId = localStorage.getItem("user_Id");
+
+    return this.http.post<any>(this.apiUrlCourses, {
+      nombre,
+      descripcionGeneral: descripcionGeneral || null,
+      iconFileId: iconFileId || null,
+      creadoPorId: creadoPorId || null,
+      activo: rest[rest.length - 1] ?? true,
+    });
   }
 
   updateArchivoNombre(cursoId: string, data: any): Observable<any> {
-    return this.http.put(`${this.baseCurso}/${cursoId}/archivo`, data);
+    return this.http.patch(`${this.apiUrlCourses}/${cursoId}`, data);
   }
 
   addEvento(evento: any): Observable<any> {
     const headers = new HttpHeaders();
 
-    return this.http.post<any>(this.event, evento, { headers }).pipe(
-      catchError((error: HttpErrorResponse) => {
-        console.error("Error al agregar evento:", error);
-        return throwError(error);
-      })
-    );
+    return this.http
+      .post<any>(`${this.apiUrlEventos}/crear`, evento, { headers })
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          console.error("Error al agregar evento:", error);
+          return throwError(() => error);
+        })
+      );
   }
 
   guardarPosicionCurso(
@@ -573,7 +338,7 @@ export class AuthService implements CanActivate {
     userId: string,
     nuevaPosicion: any
   ): Observable<any> {
-    return this.http.post<any>(`${this.event}/${userId}/${cursoId}`, {
+    return this.http.post<any>(`${this.apiUrlEventos}/crear/${userId}/${cursoId}`, {
       userId,
       cursoId,
       nuevaPosicion,
@@ -585,13 +350,16 @@ export class AuthService implements CanActivate {
     userId: string,
     nuevaPosicion: Date
   ): Observable<any> {
-    return this.http.put<any>(`${this.eventos}/${userId}/${cursoId}/posicion`, {
-      nuevaPosicion,
-    });
+    return this.http.put<any>(
+      `${this.apiUrlEventos}/${userId}/${cursoId}/posicion`,
+      {
+        nuevaPosicion,
+      }
+    );
   }
 
   getEventos(): Observable<any[]> {
-    return this.http.get<any[]>(this.eventos);
+    return this.http.get<any[]>(this.apiUrlEventos);
   }
 
   checkIfCourseCompleted(
@@ -600,44 +368,30 @@ export class AuthService implements CanActivate {
     faseId: string
   ): Observable<boolean> {
     return this.http.get<boolean>(
-      `${this.primerafasecheck}/${cursoId}/${userId}/${faseId}/completed`
+      `${this.apiUrlPrimerafase}/${cursoId}/${userId}/${faseId}/completed`
     );
   }
 
   getCursosRealizados(userId: string): Observable<any> {
-    return this.http.get(`${this.obtenerdatos}/cursos-realizados/${userId}`);
+    return this.http.get(`${this.apiUrlPrimerafase}/cursos-realizados/${userId}`);
   }
 
   getDatos(): Observable<any> {
-    return this.http.get<any>(this.buscarDatosCursos);
+    return this.http.get<any>(this.apiUrlPrimerafase);
   }
 
   uploadDoc(file: File): Observable<any> {
     const formData = new FormData();
     formData.append("file", file);
-    return this.http.post<any>(`${this.subir}`, formData);
+    return this.http.post<any>(this.apiUrlFilesUpload, formData);
   }
 
-  getCurrentUserRole(): string {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    return user.rol || "estudiante";
-  }
-
-  startCourse(data: {
-    userId: string;
-    name: string;
-    lastname: string;
-    email: string;
-    cursoId: string;
-    Nombre_Curso: string;
-    faseId: string;
-    startTime: Date;
-  }): Observable<any> {
-    return this.http.post(`${this.obtenerdatos}/start-course`, data);
+  startCourse(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrlPrimerafase}/start-course`, data);
   }
 
   endCourse(data: any): Observable<any> {
-    return this.http.post(`${this.obtenerdatos}/end-course`, data);
+    return this.http.post(`${this.apiUrlPrimerafase}/end-course`, data);
   }
 
   checkIfCourseStarted(
@@ -646,22 +400,205 @@ export class AuthService implements CanActivate {
     faseId: string
   ): Observable<{ started: boolean; startTime: string }> {
     return this.http.get<{ started: boolean; startTime: string }>(
-      `${this.obtenerdatos}/check-started/${cursoId}/${userId}/${faseId}`
+      `${this.apiUrlPrimerafase}/check-started/${cursoId}/${userId}/${faseId}`
     );
   }
 
-  getCursosByEmail(userEmail: string) {
+  getCursosByEmail(userEmail: string): Observable<any> {
     return this.http.get(
-      `${this.baseCurso}/mis_cursos_creados?userEmail=${userEmail}`
+      `${this.apiUrlLegacyCourses}/mis_cursos_creados?userEmail=${userEmail}`
     );
   }
 
-  getAllCursos() {
-    return this.http.get(`${this.baseCurso}/mis_cursos_creados`);
+  getAllCursos(): Observable<any> {
+    return this.http.get(`${this.apiUrlLegacyCourses}/mis_cursos_creados`);
   }
 
-  updateCursoEstado(cursoId: string, estado: boolean) {
-    const url = `http://localhost:3000/cursos/${cursoId}/estado`;
-    return this.http.put(url, { estado });
+  logout(): void {
+    this.authSessionService.clearSession();
+    this.router.navigate(["/login"]);
+  }
+
+  getCurrentUserRole(): string {
+    return (
+      this.authSessionService.currentUser?.rol ||
+      JSON.parse(localStorage.getItem("user") || "{}").rol ||
+      "estudiante"
+    );
+  }
+
+  canActivate(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): boolean {
+    void state;
+
+    if (!this.authSessionService.isAuthenticated) {
+      this.router.navigate(["/login"]);
+      return false;
+    }
+
+    const expectedRoles =
+      route.data["expectedRoles"] ||
+      route.data["expectedRole"] ||
+      route.data["expectedRoless"];
+
+    if (!expectedRoles) {
+      return true;
+    }
+
+    const allowedRoles = Array.isArray(expectedRoles)
+      ? expectedRoles
+      : [expectedRoles];
+
+    if (!this.authSessionService.hasAnyRole(allowedRoles)) {
+      this.router.navigate(["/inicio"]);
+      return false;
+    }
+
+    return true;
+  }
+
+  private handleErrors(error: HttpErrorResponse) {
+    let errorMessage = "An unknown error occurred!";
+
+    if (error.error instanceof ErrorEvent) {
+      errorMessage = `Error: ${error.error.message}`;
+    } else {
+      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
+    }
+
+    return throwError(() => new Error(errorMessage));
+  }
+
+  private normalizeNumericId(value: string | null | undefined): string {
+    if (!value) {
+      return "";
+    }
+
+    const normalized = String(value).trim();
+    return /^\d+$/.test(normalized) ? normalized : "";
+  }
+
+  private resolveEnrollmentUserId(candidateId: string): Observable<string> {
+    const normalizedCandidate = this.normalizeNumericId(candidateId);
+
+    if (normalizedCandidate) {
+      return of(normalizedCandidate);
+    }
+
+    const fallbackEmail =
+      this.authSessionService.currentUser?.email || localStorage.getItem("userEmail") || "";
+
+    if (!fallbackEmail) {
+      return of("");
+    }
+
+    return this.http.get<any[]>(this.apiUrlUsers).pipe(
+      map((users) => {
+        const matchedUser = users.find((user) => user.email === fallbackEmail);
+
+        if (!matchedUser) {
+          return "";
+        }
+
+        const resolvedId = this.normalizeNumericId(matchedUser.id);
+
+        if (resolvedId) {
+          localStorage.setItem("user_Id", resolvedId);
+
+          const currentUser = this.authSessionService.currentUser;
+          if (currentUser) {
+            this.authSessionService.setSession({
+              accessToken: this.authSessionService.accessToken,
+              user: {
+                ...currentUser,
+                id: resolvedId,
+              },
+            });
+          }
+        }
+
+        return resolvedId;
+      })
+    );
+  }
+
+  private async resolveRelationalUserId(
+    candidateId: string,
+    email: string
+  ): Promise<string> {
+    const normalizedCandidate = this.normalizeNumericId(candidateId);
+
+    if (normalizedCandidate) {
+      return normalizedCandidate;
+    }
+
+    if (!email) {
+      return "";
+    }
+
+    try {
+      const users = await firstValueFrom(this.http.get<any[]>(this.apiUrlUsers));
+      const matchedUser = users.find((user) => user.email === email);
+      return this.normalizeNumericId(matchedUser?.id);
+    } catch {
+      return "";
+    }
+  }
+
+  private resolveRoleByEmail(email: string): "docente" | "estudiante" | "" {
+    if (email.endsWith("@alu.unach.cl")) {
+      return "estudiante";
+    }
+
+    if (email.endsWith("@unach.cl")) {
+      return "docente";
+    }
+
+    return "";
+  }
+
+  private mapCourseToLegacy(course: any, users: any[] = [], files: any[] = []): Curso {
+    const teacher = users.find(
+      (user) => this.normalizeNumericId(user.id) === this.normalizeNumericId(course.creadoPorId)
+    );
+    const teacherName = [teacher?.nombre, teacher?.apellido].filter(Boolean).join(" ").trim();
+    const iconFile = files.find((file) => String(file.id) === String(course.iconFileId));
+    const resolvedIcon = this.normalizeCourseIconPath(
+      course.iconUrl ||
+      course.iconFilePath ||
+      course.iconFile?.path ||
+      iconFile?.path ||
+      "/assets/img/subir/logo-unach-fin.jpg"
+    );
+
+    return {
+      _id: course.id,
+      nombre_curso: course.nombre,
+      nombre_profesor: teacherName || course.creadoPorId || "Docente asignado",
+      iconocursoNombre: resolvedIcon,
+      descripcion: course.descripcionGeneral || "",
+      iconocurso: course.iconFileId || "",
+      estado: course.activo,
+      duracion: Number(course.duracion || 0),
+    };
+  }
+
+  private normalizeCourseIconPath(path: string): string {
+    if (!path) {
+      return "/assets/img/subir/logo-unach-fin.jpg";
+    }
+
+    if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("/assets/")) {
+      return encodeURI(path);
+    }
+
+    if (path.startsWith("/uploads/")) {
+      return encodeURI(`${this.apiUrl}${path}`);
+    }
+
+    return encodeURI(path);
   }
 }
+

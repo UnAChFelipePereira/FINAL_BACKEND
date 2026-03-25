@@ -55,7 +55,7 @@
                 <a href="javascript:;">{{ curso.nombre_curso }}</a>
               </h4>
               <p class="location">
-                Tiempo estimado del curso: {{ curso.tiempoestimado }} minutos
+                Tiempo estimado del curso: {{ curso.duracion }} minutos
               </p>
               <p class="location">Profesor: {{ curso.nombre_profesor }}</p>
               <p class="desc">{{ curso.descripcion }}</p>
@@ -65,8 +65,8 @@
               <a
                 href="javascript:;"
                 class="btn btn-primary d-block w-100"
-                (click)="realizarCurso(curso._id)"
-                >Realizar curso</a
+                (click)="abrirCurso(curso)"
+                >{{ getCourseActionLabel(curso) }}</a
               >
             </div>
           </div>

@@ -1,4 +1,3 @@
-<!-- BEGIN login -->
 <div class="login login-v2 fw-bold">
   <div class="login-cover">
     <div
@@ -7,27 +6,24 @@
     ></div>
     <div class="login-cover-bg"></div>
   </div>
-  <!-- BEGIN login-container -->
+
   <div class="login-container">
     <div class="login-cover-img"></div>
-    <!-- BEGIN login-header -->
+
     <div class="login-header">
       <div class="brand">
         <div class="d-flex align-items-center">
           <span src="/assets/img/subir/logo-unach-fin.jpg"></span>
           <b>AULA</b> VIRTUAL
         </div>
-        <small class="color-text: white">Universidad Adventista De Chile</small>
+        <small>Universidad Adventista de Chile</small>
       </div>
       <div class="icon">
         <i class="fa fa-lock"></i>
       </div>
     </div>
-    <!-- END login-header -->
 
-    <!-- BEGIN login-body -->
     <div class="login-body">
-      <!-- BEGIN login-content -->
       <div class="login-content">
         <form #f="ngForm" (ngSubmit)="formSubmit(f)">
           <div class="form-floating mb-20px">
@@ -43,9 +39,11 @@
             <label
               for="email"
               class="d-flex align-items-center text-gray-600 fs-13px"
-              >Correo</label
             >
+              Correo
+            </label>
           </div>
+
           <div class="form-floating mb-20px">
             <input
               type="password"
@@ -58,8 +56,9 @@
             <label
               for="password"
               class="d-flex align-items-center text-gray-600 fs-13px"
-              >Contraseña</label
             >
+              Contraseña
+            </label>
           </div>
 
           <div class="mb-20px">
@@ -69,29 +68,27 @@
           <div
             class="alert"
             role="alert"
-            [ngClass]="{'alert-danger': showError, 'alert-success': showSuccess}"
+            [ngClass]="{ 'alert-danger': showError, 'alert-success': showSuccess }"
           >
             {{ alertMessage }}
           </div>
+
           <div class="mb-20px">
             <button
               type="submit"
               class="btn btn-theme d-block w-100 h-45px btn-lg"
               style="background-color: #003a6c"
             >
-              Iniciar Sesión
+              Iniciar sesión
             </button>
           </div>
+
           <div>
-            ¿Aún no tienes cuenta? Has click
-            <a routerLink="/register">aquí</a> para registrarte.
+            ¿Aún no tienes cuenta? Haz click <a routerLink="/register">aquí</a>
+            para registrarte.
           </div>
         </form>
       </div>
-      <!-- END login-content -->
     </div>
-    <!-- END login-body -->
   </div>
-  <!-- END login-container -->
 </div>
-<!-- END login -->

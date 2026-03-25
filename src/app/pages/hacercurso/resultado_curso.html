@@ -1,0 +1,95 @@
+﻿<section class="course-result" *ngIf="!loading; else loadingState">
+  <header class="course-result__hero">
+    <div>
+      <p class="course-result__eyebrow">Resultado final</p>
+      <h1>{{ courseTitle || 'Curso' }}</h1>
+      <p class="course-result__subtitle">
+        Ya terminaste el curso. Aqui puedes revisar tu puntaje total y el detalle de tus respuestas.
+      </p>
+    </div>
+
+    <div class="course-result__actions">
+      <button type="button" class="btn btn-light" (click)="goToCourse()">Volver al curso</button>
+    </div>
+  </header>
+
+  <section class="course-result__summary">
+    <article class="summary-card summary-card--primary">
+      <span class="summary-card__label">Puntaje total</span>
+      <strong>{{ totalScore }} / {{ totalPossibleScore }}</strong>
+      <small>{{ scorePercent }}% de logro</small>
+    </article>
+
+    <article class="summary-card">
+      <span class="summary-card__label">Progreso</span>
+      <strong>{{ enrollmentProgress }}%</strong>
+      <small>Recorrido completado</small>
+    </article>
+
+    <article class="summary-card">
+      <span class="summary-card__label">Preguntas correctas</span>
+      <strong>{{ totalCorrectAnswers }} / {{ totalQuestions }}</strong>
+      <small>Resultado general</small>
+    </article>
+  </section>
+
+  <section class="course-result__highlight">
+    <div class="course-result__highlight-copy">
+      <p class="course-result__highlight-kicker">Resumen</p>
+      <h2>{{ scorePercent >= 60 ? 'Buen trabajo' : 'Sigue practicando' }}</h2>
+      <p>
+        {{ scorePercent >= 60
+          ? 'Terminaste el curso y ya puedes volver a tu lista para continuar con otros contenidos.'
+          : 'Ya tienes tu resultado. Puedes volver a tus cursos y retomar el contenido cuando quieras para mejorar tu resultado.' }}
+      </p>
+    </div>
+
+    <button type="button" class="btn btn-primary course-result__highlight-action" (click)="goToCourses()">
+      Volver a Mis Cursos
+    </button>
+  </section>
+
+  <section class="result-module-list">
+    <article class="result-module-card" *ngFor="let module of resultModules">
+      <header class="result-module-card__header">
+        <div>
+          <h2>{{ module.titulo }}</h2>
+          <p>Puntaje del modulo: {{ module.puntajeObtenido }} / {{ module.puntajeTotal }}</p>
+        </div>
+
+        <span
+          class="result-module-card__status"
+          [class.result-module-card__status--correct]="module.aprobado"
+          [class.result-module-card__status--incorrect]="!module.aprobado"
+        >
+          {{ module.aprobado ? 'Aprobado' : 'Pendiente de mejora' }}
+        </span>
+      </header>
+
+      <div class="result-question-list">
+        <article
+          class="result-question-card"
+          *ngFor="let question of module.questions"
+          [class.result-question-card--correct]="question.esCorrecta"
+          [class.result-question-card--incorrect]="!question.esCorrecta"
+        >
+          <div class="result-question-card__top">
+            <h3>{{ question.enunciado }}</h3>
+            <span>{{ question.esCorrecta ? 'Correcta' : 'Incorrecta' }}</span>
+          </div>
+
+          <p><strong>Tu respuesta:</strong> {{ question.respuestaUsuario }}</p>
+          <p><strong>Respuesta correcta:</strong> {{ question.respuestaCorrecta }}</p>
+          <small>Puntaje: {{ question.puntaje }}</small>
+        </article>
+      </div>
+    </article>
+  </section>
+</section>
+
+<ng-template #loadingState>
+  <div class="course-result__loading">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p>Cargando resultado final...</p>
+  </div>
+</ng-template>

@@ -9,7 +9,13 @@ import { AuthService } from "../../../components/auth/auth.service";
   templateUrl: "./register-v2.html",
 })
 export class RegisterV2Page implements OnDestroy {
-  userData = { name: "", lastname: "", email: "", reemail: "", password: "" };
+  userData = {
+    nombre: "",
+    apellido: "",
+    email: "",
+    reemail: "",
+    password: "",
+  };
   showPassword = false;
   showError = false;
   showSuccess = false;
@@ -32,60 +38,68 @@ export class RegisterV2Page implements OnDestroy {
 
   formSubmit(f: NgForm) {
     const formData = f.value;
-    formData.name = this.sanitizeAndFormatName(formData.name);
-    formData.lastname = this.sanitizeAndFormatName(formData.lastname);
+    formData.nombre = this.sanitizeAndFormatName(formData.nombre);
+    formData.apellido = this.sanitizeAndFormatName(formData.apellido);
+    formData.email = this.normalizeEmail(formData.email);
+    formData.reemail = this.normalizeEmail(formData.reemail);
 
     if (
-      !formData.name ||
-      !formData.lastname ||
+      !formData.nombre ||
+      !formData.apellido ||
       !formData.email ||
       !formData.reemail ||
       !formData.password
     ) {
-      this.showErrorAlert("Por favor, complete todos los campos.");
+      this.showErrorAlert("Por favor, completa todos los campos.");
       return;
     }
 
-    if (f.valid) {
-      if (formData.email !== formData.reemail) {
-        this.showErrorAlert("Los correos no coinciden");
-        return;
-      } else {
-        if (!this.validarDominio(formData.email)) {
-          this.showErrorAlert(
-            "El correo debe ser de dominio @alu.unach.cl o @unach.cl"
-          );
-          return;
-        } else {
-          const rol = formData.email.endsWith("@alu.unach.cl")
-            ? "estudiante"
-            : "docente";
-
-          this.authService
-            .register(
-              formData.name,
-              formData.lastname,
-              formData.email,
-              formData.password,
-              rol
-            )
-            .subscribe(
-              (response) => {
-                this.showSuccessAlert(
-                  "¡Te hemos enviado un correo para confirmar tu cuenta!"
-                );
-                setTimeout(() => {
-                  this.router.navigate(["/login"]);
-                }, 5000);
-              },
-              (error) => {
-                console.error("Error al registrar:", error);
-                this.showErrorAlert("Este correo ya está registrado.");
-              }
-            );
-        }
-      }
+    if (!f.valid) {
+      return;
     }
+
+    if (formData.email !== formData.reemail) {
+      this.showErrorAlert("Los correos no coinciden.");
+      return;
+    }
+
+    if (!this.validarDominio(formData.email)) {
+      this.showErrorAlert(
+        "El correo debe pertenecer a @alu.unach.cl o @unach.cl."
+      );
+      return;
+    }
+
+    this.authService
+      .register(
+        formData.nombre,
+        formData.apellido,
+        formData.email,
+        formData.password
+      )
+      .subscribe({
+        next: () => {
+          const roleLabel = this.resolveRoleByDomain(formData.email);
+          this.showSuccessAlert(
+            `Cuenta registrada correctamente como ${roleLabel}. Redirigiendo al login...`
+          );
+          setTimeout(() => {
+            this.router.navigate(["/login"]);
+          }, 5000);
+        },
+        error: (error) => {
+          console.error("Error al registrar:", error);
+
+          if (error.status === 404) {
+            this.showErrorAlert(
+              "El endpoint de registro configurado no existe en el backend actual."
+            );
+            return;
+          }
+
+          this.showErrorAlert("No se pudo registrar la cuenta. Revisa el correo o intentalo nuevamente.");
+        },
+      });
   }
 
   showErrorAlert(message: string) {
@@ -111,11 +125,25 @@ export class RegisterV2Page implements OnDestroy {
   }
 
   validarDominio(email: string): boolean {
-    if (email && email.indexOf("@") !== -1) {
-      const domain = email.split("@")[1];
-      return domain === "alu.unach.cl" || domain === "unach.cl";
+    return !!this.resolveRoleByDomain(email);
+  }
+
+  resolveRoleByDomain(email: string): string {
+    const normalizedEmail = this.normalizeEmail(email);
+
+    if (normalizedEmail.endsWith("@alu.unach.cl")) {
+      return "estudiante";
     }
-    return false;
+
+    if (normalizedEmail.endsWith("@unach.cl")) {
+      return "docente";
+    }
+
+    return "";
+  }
+
+  normalizeEmail(email: string): string {
+    return (email || "").trim().toLowerCase();
   }
 
   togglePasswordVisibility() {
@@ -123,7 +151,18 @@ export class RegisterV2Page implements OnDestroy {
   }
 
   sanitizeAndFormatName(name: string): string {
-    let sanitized = name.replace(/[^a-zA-Z]/g, "");
-    return sanitized.charAt(0).toUpperCase() + sanitized.slice(1).toLowerCase();
+    const sanitized = (name || "").replace(/[^a-zA-Z�-�\s]/g, "").trim();
+
+    if (!sanitized) {
+      return "";
+    }
+
+    return sanitized
+      .split(/\s+/)
+      .map(
+        (part: string) =>
+          part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+      )
+      .join(" ");
   }
 }

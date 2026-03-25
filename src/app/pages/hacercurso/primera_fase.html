@@ -1,284 +1,379 @@
-<div class="container position-relative">
-  <!-- Mensaje de Curso Inactivo -->
-  <div *ngIf="curso && !curso.estado" class="modal-overlay">
-    <div class="modal-container">
-      <h4>{{ curso.nombre_curso }}: Primera Fase</h4>
-      <p>
-        Este curso está inactivo,intenta en otro momento o contacta con tu
-        docente.
+<section class="course-player">
+  <div class="course-player__topbar">
+    <div>
+      <p class="course-player__eyebrow">Curso en progreso</p>
+      <h1>{{ courseTitle || 'Curso' }}</h1>
+      <p class="course-player__meta">
+        Modulo {{ currentModuleIndex + 1 }} de {{ modules.length }}
+        <span *ngIf="enrollmentProgress >= 0">- Progreso {{ enrollmentProgress }}%</span>
       </p>
-      <div class="modal-buttons single-button">
-        <button class="btn btn-secondary" (click)="closeConfirmationModal()">
-          Salir
-        </button>
+    </div>
+
+    <div class="course-player__topbar-actions">
+      <div class="course-player__timer" *ngIf="moduleStarted && !isCurrentModuleCompleted && hasTimeLimit">
+        <span class="course-player__timer-label">Tiempo restante</span>
+        <strong>{{ formattedRemainingTime }}</strong>
       </div>
+
+      <button type="button" class="btn btn-light" (click)="goBackToCourses()">
+        Volver a mis cursos
+      </button>
     </div>
   </div>
 
-  <!-- Modal de Confirmación y Contenido del Curso -->
-  <ng-container *ngIf="curso.estado">
-    <!-- Modal de Confirmación -->
-    <div *ngIf="showConfirmationModal" class="modal-overlay">
-      <div class="modal-container">
-        <h4>{{ curso.nombre_curso }}: Primera Fase</h4>
-        <p>Una vez que hagas clic en 'Iniciar' comenzará a contar el tiempo.</p>
-        <div class="modal-buttons">
-          <button class="btn btn-primary" (click)="startCourse()">
-            Iniciar
-          </button>
-          <button class="btn btn-secondary" (click)="closeConfirmationModal()">
-            Cancelar
-          </button>
-        </div>
+  <div
+    class="alert"
+    *ngIf="showError || showSuccess"
+    [ngClass]="{ 'alert-danger': showError, 'alert-success': showSuccess }"
+    role="alert"
+  >
+    {{ alertMessage }}
+  </div>
+
+  <div class="course-player__layout" *ngIf="!loading && currentModuleData; else loadingState">
+    <aside class="course-player__sidebar">
+      <div class="sidebar-card">
+        <h2>Modulos</h2>
+
+        <button
+          type="button"
+          class="module-step"
+          *ngFor="let module of modules; let moduleIndex = index; trackBy: trackByIndex"
+          [class.module-step--active]="moduleIndex === currentModuleIndex"
+          [class.module-step--done]="completedModuleIds.has(module.id)"
+          [class.module-step--locked]="!isModuleUnlocked(moduleIndex)"
+          [disabled]="!isModuleUnlocked(moduleIndex) || saving"
+          (click)="goToModule(moduleIndex)"
+        >
+          <span class="module-step__number">{{ moduleIndex + 1 }}</span>
+          <span class="module-step__content">
+            <strong>{{ module.titulo }}</strong>
+            <small>
+              {{ completedModuleIds.has(module.id) ? 'Completado' : isModuleUnlocked(moduleIndex) ? 'Disponible' : 'Bloqueado' }}
+            </small>
+          </span>
+        </button>
       </div>
-    </div>
+    </aside>
 
-    <!-- Contenido del curso -->
-    <div class="nav-wizards-container fixed-top">
-      <nav class="nav nav-wizards-1 mb-2">
-        <div class="nav-item col">
-          <a class="nav-link active">
-            <div class="nav-no">1</div>
-            <div class="nav-text">Primera fase</div>
-          </a>
-        </div>
-        <div class="nav-item col">
-          <a class="nav-link disabled">
-            <div class="nav-no">2</div>
-            <div class="nav-text">Segunda fase</div>
-          </a>
-        </div>
-        <div class="nav-item col">
-          <a class="nav-link disabled" href="#">
-            <div class="nav-no">3</div>
-            <div class="nav-text">Tercera fase</div>
-          </a>
-        </div>
-        <div class="nav-item col">
-          <a class="nav-link disabled" href="#">
-            <div class="nav-no">4</div>
-            <div class="nav-text">Cuarta fase</div>
-          </a>
-        </div>
-        <div class="nav-item col">
-          <a class="nav-link disabled" href="#">
-            <div class="nav-no">5</div>
-            <div class="nav-text">Quinta fase</div>
-          </a>
-        </div>
-      </nav>
-    </div>
-
-    <div class="container">
-      <h2>{{ curso.nombre_curso }}</h2>
-      <hr />
-      <div class="container">
-        <div class="card mb-3">
-          <div class="card-body p-4">
-            <h4>Instrucciones</h4>
-            <hr />
-            <p>{{ curso.descripcionpt1 }}</p>
-
-            <hr />
-            <h5>Descargar Archivo de la Fase 1</h5>
-            <button class="btn btn-primary" (click)="downloadFile()">
-              Descargar Archivo
-            </button>
+    <div class="course-player__content">
+      <!-- <section class="player-card">
+        <header class="player-card__header">
+          <div>
+            <span class="player-card__badge">Modulo actual</span>
+            <h2>{{ currentModuleData.module.titulo }}</h2>
+            <p>{{ currentModuleData.module.descripcion || 'Sin descripcion disponible.' }}</p>
           </div>
-        </div>
+        </header>
+      </section> -->
 
-        <!-- Pregunta 1 -->
-        <div class="card mb-3" *ngIf="curso">
-          <div class="card-body">
-            <p>Pregunta 1: {{ curso.pregunta1pt1 }}</p>
-            <div
-              class="form-check"
-              *ngFor="let respuesta of ['respuesta1p1pt1', 'respuesta2p1pt1', 'respuesta3p1pt1', 'respuesta4p1pt1']"
-            >
-              <input
-                type="radio"
-                class="form-check-input"
-                name="pregunta1"
-                [value]="curso[respuesta]"
-                [(ngModel)]="selectedAnswers['pregunta1']"
-                [disabled]="alreadyCompleted || formSubmitted"
-              />
-              <label class="form-check-label">{{ curso[respuesta] }}</label>
-            </div>
-            <div
-              class="alert mt-2"
-              role="alert"
-              *ngIf="answeredQuestions['pregunta1'] !== undefined"
-              [ngClass]="{'alert-danger': !answeredQuestions['pregunta1'], 'alert-success': answeredQuestions['pregunta1']}"
-            >
-              {{ answeredQuestions['pregunta1'] ? 'Respuesta correcta' :
-              'Respuesta incorrecta. La respuesta correcta es: ' +
-              curso['respuestacorrectap1pt1'] }}
-            </div>
+      <section class="player-card player-card--intro" *ngIf="shouldShowModuleIntro">
+        <div class="module-intro">
+          <span class="module-intro__badge">Antes de comenzar</span>
+          <h3>Preparado para resolver este modulo</h3>
+          <p>
+            Tienes
+            <strong>
+              {{ hasTimeLimit ? formattedRemainingTime + ' disponibles' : 'tiempo libre' }}
+            </strong>
+            para resolver este modulo.
+            <span *ngIf="hasTimeLimit">
+              Cuando el contador llegue a cero, ya no podras seguir respondiendo y enviaremos lo que hayas completado.
+            </span>
+          </p>
+
+          <div class="module-intro__details">
+            <article>
+              <span>Tiempo disponible</span>
+              <strong>{{ hasTimeLimit ? formattedRemainingTime : 'Sin limite' }}</strong>
+            </article>
+            <article>
+              <span>Preguntas</span>
+              <strong>{{ currentQuestions.length }}</strong>
+            </article>
+            <article>
+              <span>Puntaje total</span>
+              <strong>{{ totalCurrentModuleScore }}</strong>
+            </article>
           </div>
-        </div>
 
-        <!-- Pregunta 2 -->
-        <div class="card mb-3" *ngIf="curso">
-          <div class="card-body">
-            <p>Pregunta 2: {{ curso.pregunta2pt1 }}</p>
-            <div
-              class="form-check"
-              *ngFor="let respuesta of ['respuesta1p2pt1', 'respuesta2p2pt1', 'respuesta3p2pt1', 'respuesta4p2pt1']"
-            >
-              <input
-                type="radio"
-                class="form-check-input"
-                name="pregunta2"
-                [value]="curso[respuesta]"
-                [(ngModel)]="selectedAnswers['pregunta2']"
-                [disabled]="alreadyCompleted"
-              />
-              <label class="form-check-label">{{ curso[respuesta] }}</label>
-            </div>
-            <div
-              class="alert mt-2"
-              role="alert"
-              *ngIf="answeredQuestions['pregunta2'] !== undefined"
-              [ngClass]="{'alert-danger': !answeredQuestions['pregunta2'], 'alert-success': answeredQuestions['pregunta2']}"
-            >
-              {{ answeredQuestions['pregunta2'] ? 'Respuesta correcta' :
-              'Respuesta incorrecta. La respuesta correcta es: ' +
-              curso['respuestacorrectap2pt1'] }}
-            </div>
-          </div>
+          <button type="button" class="btn btn-primary btn-lg module-intro__action" (click)="startCurrentModule()" [disabled]="!canStartCurrentModule">
+            {{ canStartCurrentModule ? 'Iniciar modulo' : 'Tiempo agotado' }}
+          </button>
         </div>
+      </section>
 
-        <!-- Pregunta 3 -->
-        <div class="card mb-3" *ngIf="curso">
-          <div class="card-body">
-            <p>Pregunta 3: {{ curso.pregunta3pt1 }}</p>
-            <div
-              class="form-check"
-              *ngFor="let respuesta of ['respuesta1p3pt1', 'respuesta2p3pt1', 'respuesta3p3pt1', 'respuesta4p3pt1']"
-            >
-              <input
-                type="radio"
-                class="form-check-input"
-                name="pregunta3"
-                [value]="curso[respuesta]"
-                [(ngModel)]="selectedAnswers['pregunta3']"
-                [disabled]="alreadyCompleted"
-              />
-              <label class="form-check-label">{{ curso[respuesta] }}</label>
+      <ng-container *ngIf="!shouldShowModuleIntro">
+        <section class="player-card">
+          <header class="player-card__header">
+            <div>
+              <h3>Recursos del modulo</h3>
+              <p>Revisa el contenido antes de responder la evaluacion.</p>
             </div>
-            <div
-              class="alert mt-2"
-              role="alert"
-              *ngIf="answeredQuestions['pregunta3'] !== undefined"
-              [ngClass]="{'alert-danger': !answeredQuestions['pregunta3'], 'alert-success': answeredQuestions['pregunta3']}"
-            >
-              {{ answeredQuestions['pregunta3'] ? 'Respuesta correcta' :
-              'Respuesta incorrecta. La respuesta correcta es: ' +
-              curso['respuestacorrectap3pt1'] }}
-            </div>
-          </div>
-        </div>
+          </header>
 
-        <!-- Pregunta 4 -->
-        <div class="card mb-3" *ngIf="curso">
-          <div class="card-body">
-            <p>Pregunta 4: {{ curso.pregunta4pt1 }}</p>
-            <div
-              class="form-check"
-              *ngFor="let respuesta of ['respuesta1p4pt1', 'respuesta2p4pt1', 'respuesta3p4pt1', 'respuesta4p4pt1']"
-            >
-              <input
-                type="radio"
-                class="form-check-input"
-                name="pregunta4"
-                [value]="curso[respuesta]"
-                [(ngModel)]="selectedAnswers['pregunta4']"
-                [disabled]="alreadyCompleted"
-              />
-              <label class="form-check-label">{{ curso[respuesta] }}</label>
-            </div>
-            <div
-              class="alert mt-2"
-              role="alert"
-              *ngIf="answeredQuestions['pregunta4'] !== undefined"
-              [ngClass]="{'alert-danger': !answeredQuestions['pregunta4'], 'alert-success': answeredQuestions['pregunta4']}"
-            >
-              {{ answeredQuestions['pregunta4'] ? 'Respuesta correcta' :
-              'Respuesta incorrecta. La respuesta correcta es: ' +
-              curso['respuestacorrectap4pt1'] }}
-            </div>
-          </div>
-        </div>
+          <div class="resource-list" *ngIf="currentResources.length; else noResources">
+            <article class="resource-card" *ngFor="let resource of currentResources; trackBy: trackByResourceId">
+              <div class="resource-card__text">
+                <h4>{{ resource.titulo }}</h4>
+                <p *ngIf="resource.descripcion">{{ resource.descripcion }}</p>
+              </div>
 
-        <!-- Pregunta 5 -->
-        <div class="card mb-3" *ngIf="curso">
-          <div class="card-body">
-            <p>Pregunta 5: {{ curso.pregunta5pt1 }}</p>
-            <div
-              class="form-check"
-              *ngFor="let respuesta of ['respuesta1p5pt1', 'respuesta2p5pt1', 'respuesta3p5pt1', 'respuesta4p5pt1']"
-            >
-              <input
-                type="radio"
-                class="form-check-input"
-                name="pregunta5"
-                [value]="curso[respuesta]"
-                [(ngModel)]="selectedAnswers['pregunta5']"
-                [disabled]="alreadyCompleted"
-              />
-              <label class="form-check-label">{{ curso[respuesta] }}</label>
-            </div>
-            <div
-              class="alert mt-2"
-              role="alert"
-              *ngIf="answeredQuestions['pregunta5'] !== undefined"
-              [ngClass]="{'alert-danger': !answeredQuestions['pregunta5'], 'alert-success': answeredQuestions['pregunta5']}"
-            >
-              {{ answeredQuestions['pregunta5'] ? 'Respuesta correcta' :
-              'Respuesta incorrecta. La respuesta correcta es: ' +
-              curso['respuestacorrectap5pt1'] }}
-            </div>
-          </div>
-        </div>
+              <div class="resource-card__media" *ngIf="isImageResource(resource)">
+                <img
+                  class="resource-card__image"
+                  [src]="getResourceUrl(resource)"
+                  [alt]="resource.titulo"
+                />
+              </div>
 
-        <div *ngIf="!alreadyCompleted">
-          <form #f="ngForm" (ngSubmit)="submitAnswers(f)">
-            <!-- Alertas -->
-            <div
-              class="alert mt-3"
-              role="alert"
-              *ngIf="showError || showSuccess"
-              [ngClass]="{'alert-danger': showError, 'alert-success': showSuccess}"
-            >
-              {{ alertMessage }}
-            </div>
-            <!-- Botones de acción -->
-            <div class="d-grid gap-2 mt-3">
-              <button
-                type="submit"
-                class="btn btn-primary btn-lg btn-block"
-                [disabled]="formSubmitted"
+              <div class="resource-card__media" *ngIf="isVideoResource(resource)">
+                <button
+                  *ngIf="!isVideoPlaying(resource)"
+                  type="button"
+                  class="resource-card__video-cover"
+                  (click)="playVideo(resource)"
+                >
+                  <img
+                    class="resource-card__video-poster"
+                    [src]="getYoutubeThumbnailUrl(resource)"
+                    [alt]="resource.titulo"
+                  />
+                  <span class="resource-card__video-overlay"></span>
+                  <span class="resource-card__video-play" aria-hidden="true"></span>
+                  <span class="resource-card__video-label">Reproducir video</span>
+                </button>
+
+                <iframe
+                  *ngIf="isVideoPlaying(resource)"
+                  class="resource-card__video"
+                  [src]="getYoutubeEmbedUrl(resource)"
+                  title="Video del modulo"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen
+                ></iframe>
+              </div>
+
+              <div class="resource-card__python" *ngIf="isPythonResource(resource)">
+                <div class="resource-card__python-toolbar">
+                  <span>Terminal Python</span>
+                  <div class="resource-card__python-actions">
+                    <button type="button" class="btn btn-outline-light btn-sm" (click)="resetPythonResource(resource)">
+                      Reiniciar
+                    </button>
+                    <button type="button" class="btn btn-warning btn-sm" (click)="runPythonResource(resource)" [disabled]="isPythonRunning(resource)">
+                      {{ isPythonRunning(resource) ? 'Ejecutando...' : 'Ejecutar codigo' }}
+                    </button>
+                  </div>
+                </div>
+
+                <textarea
+                  class="resource-card__python-editor"
+                  [ngModel]="getPythonCode(resource)"
+                  (ngModelChange)="updatePythonCode(resource, $event)"
+                  [disabled]="isPythonRunning(resource)"
+                  spellcheck="false"
+                  rows="10"
+                ></textarea>
+
+                <div
+                  class="resource-card__python-inputs"
+                  *ngIf="hasPendingPythonPrompts(resource)"
+                >
+                  <div class="resource-card__python-inputs-header">
+                    <strong>Entradas del programa</strong>
+                    <span>Completa los valores solicitados por <code>input()</code> para continuar.</span>
+                  </div>
+
+                  <label
+                    class="resource-card__python-prompt"
+                    *ngFor="let prompt of getPythonPrompts(resource); let promptIndex = index; trackBy: trackByIndex"
+                  >
+                    <span>{{ prompt || ('Entrada ' + (promptIndex + 1)) }}</span>
+                    <input
+                      type="text"
+                      class="form-control"
+                      [ngModel]="getPythonPromptValue(resource, promptIndex)"
+                      (ngModelChange)="updatePythonPromptValue(resource, promptIndex, $event)"
+                      [disabled]="isPythonRunning(resource)"
+                      [placeholder]="prompt || ('Entrada ' + (promptIndex + 1))"
+                    />
+                  </label>
+
+                  <div class="resource-card__python-input-actions">
+                    <button
+                      type="button"
+                      class="btn btn-outline-light btn-sm"
+                      (click)="cancelPythonPrompts(resource)"
+                      [disabled]="isPythonRunning(resource)"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-warning btn-sm"
+                      (click)="confirmPythonPrompts(resource)"
+                      [disabled]="isPythonRunning(resource)"
+                    >
+                      {{ isPythonRunning(resource) ? 'Ejecutando...' : 'Ejecutar con entradas' }}
+                    </button>
+                  </div>
+                </div>
+
+                <pre class="resource-card__python-output">{{ getPythonOutput(resource) }}</pre>
+              </div>
+
+              <a
+                *ngIf="resource.file && !isVideoResource(resource) && !isPythonResource(resource)"
+                class="btn btn-outline-primary"
+                [href]="getResourceUrl(resource)"
+                target="_blank"
+                rel="noopener"
               >
-                Enviar respuestas
+                Abrir {{ downloadLabel(resource) }}
+              </a>
+            </article>
+          </div>
+
+          <ng-template #noResources>
+            <div class="empty-state">Este modulo aun no tiene recursos asociados.</div>
+          </ng-template>
+        </section>
+
+        <section class="player-card">
+          <header class="player-card__header player-card__header--split">
+            <div>
+              <h3>Evaluacion del modulo</h3>
+              <p>
+                {{ isCurrentModuleCompleted
+                  ? 'Este modulo ya fue completado. Puedes revisar tus respuestas y el resultado de cada una.'
+                  : moduleExpired
+                    ? 'El tiempo termino y tus respuestas quedaron enviadas automaticamente.'
+                    : 'Responde todas las preguntas y luego envia el modulo para desbloquear el siguiente.' }}
+              </p>
+            </div>
+
+            <div class="player-card__timer-chip" *ngIf="moduleStarted && !isCurrentModuleCompleted && hasTimeLimit">
+              <span>Cuenta regresiva</span>
+              <strong>{{ formattedRemainingTime }}</strong>
+            </div>
+          </header>
+
+          <div class="question-list" *ngIf="currentQuestions.length; else noQuestions">
+            <article
+              class="question-card"
+              *ngFor="let question of currentQuestions; let questionIndex = index; trackBy: trackByIndex"
+              [ngClass]="getQuestionStateClass(question)"
+            >
+              <div class="question-card__header">
+                <span class="question-card__number">{{ questionIndex + 1 }}</span>
+                <div class="question-card__title-wrap">
+                  <div>
+                    <h4>{{ question.enunciado }}</h4>
+                    <small>Puntaje: {{ question.puntaje }}</small>
+                  </div>
+
+                  <span
+                    *ngIf="isCurrentModuleCompleted"
+                    class="question-card__status"
+                    [class.question-card__status--correct]="isQuestionCorrect(question)"
+                    [class.question-card__status--incorrect]="!isQuestionCorrect(question)"
+                  >
+                    {{ getQuestionResultLabel(question) }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="question-card__body" [ngSwitch]="question.tipoPregunta">
+                <div *ngSwitchCase="'multiple_choice'" class="options-list">
+                  <label
+                    class="option-item"
+                    *ngFor="let option of question.options; trackBy: trackByIndex"
+                    [ngClass]="getOptionStateClass(question, option.id, option.esCorrecta)"
+                  >
+                    <input
+                      type="radio"
+                      [name]="question.id"
+                      [value]="option.id"
+                      [(ngModel)]="selectedOptionAnswers[question.id]"
+                      [disabled]="isAnswerInteractionDisabled"
+                    />
+                    <span>{{ option.texto }}</span>
+                  </label>
+                </div>
+
+                <div *ngSwitchCase="'true_false'" class="options-list">
+                  <label
+                    class="option-item"
+                    *ngFor="let option of question.options; trackBy: trackByIndex"
+                    [ngClass]="getOptionStateClass(question, option.id, option.esCorrecta)"
+                  >
+                    <input
+                      type="radio"
+                      [name]="question.id"
+                      [value]="option.id"
+                      [(ngModel)]="selectedOptionAnswers[question.id]"
+                      [disabled]="isAnswerInteractionDisabled"
+                    />
+                    <span>{{ option.texto }}</span>
+                  </label>
+                </div>
+
+                <div *ngSwitchCase="'open_text'">
+                  <textarea
+                    rows="4"
+                    class="form-control text-answer"
+                    [ngClass]="getOpenTextStateClass(question)"
+                    [(ngModel)]="textAnswers[question.id]"
+                    [disabled]="isAnswerInteractionDisabled"
+                    placeholder="Escribe tu respuesta aqui"
+                  ></textarea>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <ng-template #noQuestions>
+            <div class="empty-state">Este modulo no tiene preguntas configuradas.</div>
+          </ng-template>
+
+          <div class="player-card__actions">
+            <button type="button" class="btn btn-light" (click)="previousModule()" [disabled]="!canGoPrevious || saving">
+              Modulo anterior
+            </button>
+
+            <div class="player-card__actions-right">
+              <button
+                type="button"
+                class="btn btn-success"
+                (click)="submitCurrentModule()"
+                [disabled]="!canSubmitCurrentModule"
+              >
+                {{ saving ? 'Guardando...' : isCurrentModuleCompleted ? 'Modulo completado' : 'Enviar respuestas' }}
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="nextModule()"
+                [disabled]="saving || !isCurrentModuleCompleted"
+              >
+                {{ canGoNext ? 'Siguiente modulo' : 'Ver resultado final' }}
               </button>
             </div>
-          </form>
-        </div>
-
-        <!-- Mensaje de fase completada -->
-        <div *ngIf="alreadyCompleted">
-          <div class="d-grid gap-2 mt-3">
-            <button
-              class="btn btn-primary btn-lg btn-block"
-              *ngIf="showNextPhaseButton"
-              (click)="goToNextPhase(cursoId)"
-            >
-              Ir a la siguiente fase
-            </button>
           </div>
-        </div>
-      </div>
+        </section>
+      </ng-container>
     </div>
-  </ng-container>
-</div>
+  </div>
+
+  <ng-template #loadingState>
+    <div class="player-loading">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p>Cargando curso...</p>
+    </div>
+  </ng-template>
+</section>
+
+
+

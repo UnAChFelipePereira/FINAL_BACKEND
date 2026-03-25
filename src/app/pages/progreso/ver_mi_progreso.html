@@ -56,10 +56,36 @@
                 <a href="javascript:;">{{ curso.nombre_curso }}</a>
               </h4>
               <p class="location">
-                Tiempo estimado del curso: {{ curso.tiempoestimado }} minutos
+                Tiempo estimado del curso: {{ curso.duracion }} minutos
               </p>
               <p class="location">Profesor: {{ curso.nombre_profesor }}</p>
               <p class="desc">{{ curso.descripcion }}</p>
+              <div class="progress-summary">
+                <div class="progress-copy">
+                  <span class="progress-label">Avance</span>
+                  <strong>{{ curso.progresoInscripcion || 0 }}%</strong>
+                </div>
+                <span
+                  class="status-chip"
+                  [ngClass]="{
+                    'status-completed': curso.estadoInscripcion === 'completado' || (curso.progresoInscripcion || 0) >= 100,
+                    'status-progress': curso.estadoInscripcion === 'en_progreso' || ((curso.progresoInscripcion || 0) > 0 && (curso.progresoInscripcion || 0) < 100),
+                    'status-enrolled': !curso.estadoInscripcion || curso.estadoInscripcion === 'inscrito'
+                  }"
+                >
+                  {{ getEnrollmentStatusLabel(curso) }}
+                </span>
+              </div>
+              <div class="progress progress-sm course-progress-bar">
+                <div
+                  class="progress-bar"
+                  role="progressbar"
+                  [style.width.%]="curso.progresoInscripcion || 0"
+                  [attr.aria-valuenow]="curso.progresoInscripcion || 0"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                ></div>
+              </div>
               <p
                 class="estado"
                 [ngClass]="curso.estado ? 'text-success' : 'text-danger'"

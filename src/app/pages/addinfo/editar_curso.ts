@@ -34,7 +34,7 @@ export class Editar_curso implements OnInit, AfterViewInit {
     nombre_curso: "",
     nombre_profesor: "",
     descripcion: "",
-    tiempoestimado: "",
+    duracion: "",
     iconocursoNombre: "",
     archivo_pt1Nombre: null,
     descripcionpt1: "",
@@ -421,8 +421,8 @@ export class Editar_curso implements OnInit, AfterViewInit {
   }
 
   removeNegativeNumbers(): void {
-    if (this.cursoData.tiempoestimado && this.cursoData.tiempoestimado < 0) {
-      this.cursoData.tiempoestimado = this.cursoData.tiempoestimado.replace(
+    if (this.cursoData.duracion && this.cursoData.duracion < 0) {
+      this.cursoData.duracion = this.cursoData.duracion.replace(
         /-/g,
         ""
       );

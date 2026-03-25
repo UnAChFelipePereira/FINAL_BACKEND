@@ -1,7 +1,7 @@
 import { Component, OnInit } from "@angular/core";
+import { Router } from "@angular/router";
 import { AuthService } from "../../components/auth/auth.service";
 import { Curso } from "./curso.model";
-import { Router } from "@angular/router";
 
 @Component({
   selector: "extra-search-results",
@@ -10,109 +10,96 @@ import { Router } from "@angular/router";
 })
 export class BuscarCursosPage implements OnInit {
   cursos: Curso[] = [];
+  cursosOriginales: Curso[] = [];
   cursosInscritos: string[] = [];
   userId: string | null = null;
-  showError: boolean = false;
-  showSuccess: boolean = false;
-  alertMessage: string = "";
-  terminoBusqueda: string = "";
+  showError = false;
+  showSuccess = false;
+  alertMessage = "";
+  terminoBusqueda = "";
 
   constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
     this.userId = localStorage.getItem("user_Id");
+
     if (this.userId) {
       this.getEnrolledCursos(this.userId);
     }
+
     this.loadAllCursos();
   }
 
   getEnrolledCursos(userId: string): void {
-    this.authService.getEnrolledCursos(userId).subscribe(
-      (response: any) => {
-        this.cursosInscritos = response.cursosInscritos;
+    this.authService.getEnrolledCursos(userId).subscribe({
+      next: (response: { cursosInscritos: string[] }) => {
+        this.cursosInscritos = response.cursosInscritos || [];
       },
-      (error) => {
+      error: (error) => {
         console.error("Error al obtener cursos inscritos:", error);
-      }
-    );
-  }
-  loadAllCursos(): void {
-    this.authService.getCursos().subscribe(
-      (response: any) => {
-        if (Array.isArray(response.data)) {
-          this.cursos = response.data
-            .filter((curso: Curso) => curso.estado === true)
-            .map((curso: Curso) => {
-              const iconoUrl = `http://localhost:3000/uploads/${encodeURIComponent(
-                curso.iconocursoNombre
-              )}`;
-              return {
-                ...curso,
-                iconocursoNombre: iconoUrl,
-              };
-            });
-        } else {
-          console.error(
-            "La respuesta del servidor no contiene un arreglo válido de cursos:",
-            response
-          );
-        }
       },
-      (error) => {
+    });
+  }
+
+  loadAllCursos(): void {
+    this.authService.getCursos().subscribe({
+      next: (response: Curso[]) => {
+        this.cursosOriginales = response.filter((curso) => curso.estado === true);
+        this.cursos = [...this.cursosOriginales];
+      },
+      error: (error) => {
         console.error("Error al obtener cursos:", error);
-      }
-    );
+      },
+    });
   }
 
   buscarCursos(): void {
-    if (this.terminoBusqueda.trim() === "") {
-      this.loadAllCursos();
-    } else {
-      this.cursos = this.cursos.filter((curso) =>
-        curso.nombre_curso
-          .toLowerCase()
-          .includes(this.terminoBusqueda.toLowerCase())
-      );
+    const termino = this.terminoBusqueda.trim().toLowerCase();
+
+    if (!termino) {
+      this.cursos = [...this.cursosOriginales];
+      return;
     }
+
+    this.cursos = this.cursosOriginales.filter((curso) =>
+      curso.nombre_curso.toLowerCase().includes(termino)
+    );
   }
 
   enrollUserInCurso(cursoId: string): void {
     if (this.cursosInscritos.includes(cursoId)) {
       this.showErrorAlert("Ya estás inscrito en este curso.");
-    } else {
-      if (this.userId) {
-        this.authService.enrollUserInCurso(this.userId, cursoId).subscribe(
-          (response) => {
-            this.cursosInscritos.push(cursoId);
-            this.showSuccessAlert("Te has inscrito en el curso exitosamente.");
-            this.router.navigate(["/mis-cursos"]);
-          },
-          (error) => {
-            console.error("Error al inscribir usuario:", error);
-            this.showErrorAlert("Error al inscribir usuario en el curso.");
-          }
-        );
-      } else {
-        console.error("No se encontró el ID del usuario en localStorage.");
-      }
+      return;
     }
+
+    if (!this.userId) {
+      console.error("No se encontró el ID del usuario en localStorage.");
+      return;
+    }
+
+    this.authService.enrollUserInCurso(this.userId, cursoId).subscribe({
+      next: () => {
+        this.cursosInscritos.push(cursoId);
+        this.showSuccessAlert("Te has inscrito en el curso exitosamente.");
+        this.router.navigate(["/mis-cursos"]);
+      },
+      error: (error) => {
+        console.error("Error al inscribir usuario:", error);
+        this.showErrorAlert("Error al inscribir usuario en el curso.");
+      },
+    });
   }
 
   showErrorAlert(message: string) {
     this.alertMessage = message;
     this.showError = true;
-    setTimeout(() => {
-      this.hideAlerts();
-    }, 5000);
+    setTimeout(() => this.hideAlerts(), 5000);
   }
 
   showSuccessAlert(message: string) {
     this.alertMessage = message;
     this.showSuccess = true;
-    setTimeout(() => {
-      this.hideAlerts();
-    }, 5000);
+    setTimeout(() => this.hideAlerts(), 5000);
   }
 
   hideAlerts() {

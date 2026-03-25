@@ -6,4 +6,7 @@ export interface Curso {
   descripcion: string;
   iconocurso: string;
   estado: boolean;
+  duracion?: number;
+  progresoInscripcion?: number;
+  estadoInscripcion?: "inscrito" | "en_progreso" | "completado" | "cancelado";
 }

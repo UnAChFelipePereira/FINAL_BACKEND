@@ -133,6 +133,7 @@ import { HacerSegundafase } from "./pages/hacercurso/segunda_fase";
 import { HacerTercerafase } from "./pages/hacercurso/tercera_fase";
 import { HacerCuartafase } from "./pages/hacercurso/cuarta_fase";
 import { HacerQuintafase } from "./pages/hacercurso/quinta_fase";
+import { ResultadoCursoPage } from "./pages/hacercurso/resultado_curso";
 import { MiProgreso } from "./pages/progreso/mi_progreso";
 import { ProgresoEstudiantes } from "./pages/progreso/progreso_estudiante";
 import { VerProgresoEstudiante } from "./pages/progreso/ver_progreso_estudiante";
@@ -145,11 +146,11 @@ import { VerMiProgreso } from "./pages/progreso/ver_mi_progreso";
 
 const routes: Routes = [
   { path: "", redirectTo: "inicio", pathMatch: "full" },
-  { path: "login", component: LoginV1Page, data: { title: "Inciar sesión" } },
+  { path: "login", component: LoginV1Page, data: { title: "Inciar sesiÃƒÆ’Ã‚Â³n" } },
   {
     path: "forgot-password",
     component: ForgotV1Page,
-    data: { title: "Olvidé mi contraseña" },
+    data: { title: "OlvidÃƒÆ’Ã‚Â© mi contraseÃƒÆ’Ã‚Â±a" },
   },
   {
     path: "activate-account",
@@ -160,7 +161,7 @@ const routes: Routes = [
   {
     path: "reset-password",
     component: ResetPasswordV1Page,
-    data: { title: "Reiniciar contraseña" },
+    data: { title: "Reiniciar contraseÃƒÆ’Ã‚Â±a" },
     canActivate: [AuthService],
   },
   {
@@ -206,10 +207,15 @@ const routes: Routes = [
 
   //hacer curso
   {
-    path: "primera_fase/:id",
+    path: "curso/:id",
     component: HacerPrimerafase,
-    data: { title: "Realizar Primera Fase" },
+    data: { title: "Realizar Curso" },
     canActivate: [AuthService],
+  },
+  {
+    path: "primera_fase/:id",
+    redirectTo: "curso/:id",
+    pathMatch: "full",
   },
   {
     path: "segunda_fase/:id",
@@ -233,6 +239,12 @@ const routes: Routes = [
     path: "quinta_fase/:id",
     component: HacerQuintafase,
     data: { title: "Realizar Quinta fase" },
+    canActivate: [AuthService],
+  },
+  {
+    path: "resultado_curso/:id",
+    component: ResultadoCursoPage,
+    data: { title: "Resultado del Curso" },
     canActivate: [AuthService],
   },
   //hacer curso

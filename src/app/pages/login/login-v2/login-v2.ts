@@ -1,5 +1,5 @@
 import { Component } from "@angular/core";
-import { Router, CanActivate } from "@angular/router";
+import { Router } from "@angular/router";
 import { NgForm } from "@angular/forms";
 import { AuthService } from "../../../components/auth/auth.service";
 
@@ -11,28 +11,44 @@ export class LoginV2Page {
   constructor(private authService: AuthService, private router: Router) {}
 
   formSubmit(f: NgForm) {
-    if (f.valid) {
-      const formData = f.value;
-
-      this.authService.login(formData.email, formData.password).subscribe(
-        (response) => {
-          console.log("Respuesta del inicio de sesión:", response);
-
-          localStorage.setItem("access_token", response.access_token);
-          localStorage.setItem("refresh_token", response.refresh_token);
-          localStorage.setItem("user_Id", response.user._id);
-          localStorage.setItem("rol", response.rol);
-
-          console.log(response.access_token);
-          console.log(response.refresh_token);
-
-          this.router.navigate(["dashboard"]);
-          return true;
-        },
-        (error) => {
-          console.error("Error al iniciar sesión:", error);
-        }
-      );
+    if (!f.valid) {
+      return;
     }
+
+    const formData = f.value;
+
+    this.authService.login(formData.email, formData.password).subscribe({
+      next: (response) => {
+        console.log("Respuesta del inicio de sesión:", response);
+
+        const accessToken =
+          response.access_token || response.accessToken || response.token || "";
+        const refreshToken =
+          (response as any).refresh_token || (response as any).refreshToken || "";
+        const userId = response?.user?.id || response?.user?._id || "";
+        const rol = response?.user?.rol || response?.user?.role || "";
+
+        if (accessToken) {
+          localStorage.setItem("access_token", accessToken);
+        }
+
+        if (refreshToken) {
+          localStorage.setItem("refresh_token", refreshToken);
+        }
+
+        if (userId) {
+          localStorage.setItem("user_Id", userId);
+        }
+
+        if (rol) {
+          localStorage.setItem("rol", rol);
+        }
+
+        this.router.navigate(["dashboard"]);
+      },
+      error: (error) => {
+        console.error("Error al iniciar sesión:", error);
+      },
+    });
   }
 }

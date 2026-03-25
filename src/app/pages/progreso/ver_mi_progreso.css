@@ -1,11 +1,11 @@
 
 .result-item {
   display: flex;
-  align-items: stretch; 
+  align-items: stretch;
   border: 1px solid #ccc;
   border-radius: 5px;
-  overflow: hidden; 
-  margin-bottom: 10px; 
+  overflow: hidden;
+  margin-bottom: 10px;
 }
 
 
@@ -16,55 +16,111 @@
   }
 
   .result-image {
-    width: 100px; 
-    flex: none; 
+    width: 100px;
+    flex: none;
     background-size: cover;
-    background-position: center; 
-    background-repeat: no-repeat; 
-  }}
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+}
 
-  .position-fixed {
-    z-index: 1050;
-  }
-  
-  .top-50 {
-    top: 50%;
-  }
-  
-  .start-50 {
-    left: 50%;
-  }
-  
-  .translate-middle {
-    transform: translate(-50%, -50%);
-  }
+.position-fixed {
+  z-index: 1050;
+}
 
-  .btn-close {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
+.top-50 {
+  top: 50%;
+}
 
-  .alert .btn-close {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
-  
-  .alert {
-    width: 150%;
-    height: 80px;
-    padding: 20px;
-    margin-bottom: 10px;
-    font-size: 0.8rem;
-    min-height: 80px;
-    line-height: 1.5;
-    padding-top: 30px;
-    text-align: center;
-  }
-  
-  .alert p {
-    margin-bottom: 0; 
-    margin-top: 10px; 
-  }
+.start-50 {
+  left: 50%;
+}
 
+.translate-middle {
+  transform: translate(-50%, -50%);
+}
+
+.btn-close {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.alert .btn-close {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.alert {
+  width: 150%;
+  height: 80px;
+  padding: 20px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  min-height: 80px;
+  line-height: 1.5;
+  padding-top: 30px;
+  text-align: center;
+}
+
+.alert p {
+  margin-bottom: 0;
+  margin-top: 10px;
+}
+
+.progress-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0 8px;
+}
+
+.progress-copy {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.progress-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6c757d;
+}
+
+.course-progress-bar {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #e9eef5;
+}
+
+.course-progress-bar .progress-bar {
+  background: linear-gradient(90deg, #0d6efd 0%, #33b5e5 100%);
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-enrolled {
+  background: #edf2ff;
+  color: #3551b5;
+}
+
+.status-progress {
+  background: #e8f7ee;
+  color: #1f7a45;
+}
+
+.status-completed {
+  background: #fff3e6;
+  color: #a95b00;
+}

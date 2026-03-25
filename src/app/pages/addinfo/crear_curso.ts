@@ -1,780 +1,582 @@
+import { Component, OnInit, ViewEncapsulation } from "@angular/core";
 import {
-  Component,
-  AfterViewInit,
-  OnInit,
-  ViewEncapsulation,
-  HostListener,
-} from "@angular/core";
-import { Editor } from "ngx-editor";
-import Tagify from "@yaireo/tagify";
-import { FormGroup, NgForm } from "@angular/forms";
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from "@angular/forms";
 import { Router } from "@angular/router";
-import { AppSettings } from "../../service/app-settings.service";
+import { firstValueFrom } from "rxjs";
 import { AuthService } from "../../components/auth/auth.service";
+import { FilesApiService } from "../../features/files/files.service";
+import { CoursesApiService } from "../../features/courses/courses.service";
+import { CourseModulesApiService } from "../../features/course-modules/course-modules.service";
+import { ModuleResourcesApiService } from "../../features/module-resources/module-resources.service";
+import { QuestionsApiService } from "../../features/questions/questions.service";
+import { QuestionOptionsApiService } from "../../features/question-options/question-options.service";
+import { UsersApiService } from "../../features/users/users.service";
+import { AppSettings } from "../../service/app-settings.service";
+
+type ContentType = "text" | "image" | "video" | "python";
+type QuestionType = "multiple_choice" | "true_false" | "open_text";
 
 @Component({
   selector: "crear_curso",
   templateUrl: "./crear_curso.html",
-  encapsulation: ViewEncapsulation.None,
   styleUrls: ["./crear_curso.css"],
+  encapsulation: ViewEncapsulation.None,
 })
-export class Crear_curso implements OnInit, AfterViewInit {
-  editor: Editor;
-  completedSections: string[] = [];
-  html = "";
-  isProfesorEditable: boolean = true;
-  userName: string;
-  userLastName: string;
-  user_Id: string;
-  userRol: string;
-  userEmail: string;
-  emailusuario: string;
-
-  cursoArchivos: any = {
-    iconocurso: "",
-    archivo_pt1: "",
-    archivo_pt2: "",
-    archivo_pt3: "",
-    archivo_pt4: "",
-    archivo_pt5: "",
-  };
-
-  cursoData: any = {
-    nombre_curso: "",
-    nombre_profesor: "",
-    descripcion: "",
-    tiempoestimado: "",
-    iconocursoNombre: "",
-    // archivo_pt1Nombre: null,
-    archivo_pt1Nombre: "",
-    descripcionpt1: "",
-    pregunta1pt1: "",
-    respuesta1p1pt1: "",
-    respuesta2p1pt1: "",
-    respuesta3p1pt1: "",
-    respuesta4p1pt1: "",
-    respuestacorrectap1pt1: null,
-    pregunta2pt1: "",
-    respuesta1p2pt1: "",
-    respuesta2p2pt1: "",
-    respuesta3p2pt1: "",
-    respuesta4p2pt1: "",
-    respuestacorrectap2pt1: null,
-    pregunta3pt1: "",
-    respuesta1p3pt1: "",
-    respuesta2p3pt1: "",
-    respuesta3p3pt1: "",
-    respuesta4p3pt1: "",
-    respuestacorrectap3pt1: null,
-    pregunta4pt1: "",
-    respuesta1p4pt1: "",
-    respuesta2p4pt1: "",
-    respuesta3p4pt1: "",
-    respuesta4p4pt1: "",
-    respuestacorrectap4pt1: null,
-    pregunta5pt1: "",
-    respuesta1p5pt1: "",
-    respuesta2p5pt1: "",
-    respuesta3p5pt1: "",
-    respuesta4p5pt1: "",
-    respuestacorrectap5pt1: null,
-    // archivo_pt2Nombre: null,
-    archivo_pt2Nombre: "",
-    descripcionpt2: "",
-    pregunta1pt2: "",
-    respuesta1p1pt2: "",
-    respuesta2p1pt2: "",
-    respuesta3p1pt2: "",
-    respuesta4p1pt2: "",
-    respuestacorrectap1pt2: null,
-    pregunta2pt2: "",
-    respuesta1p2pt2: "",
-    respuesta2p2pt2: "",
-    respuesta3p2pt2: "",
-    respuesta4p2pt2: "",
-    respuestacorrectap2pt2: null,
-    pregunta3pt2: "",
-    respuesta1p3pt2: "",
-    respuesta2p3pt2: "",
-    respuesta3p3pt2: "",
-    respuesta4p3pt2: "",
-    respuestacorrectap3pt2: null,
-    pregunta4pt2: "",
-    respuesta1p4pt2: "",
-    respuesta2p4pt2: "",
-    respuesta3p4pt2: "",
-    respuesta4p4pt2: "",
-    respuestacorrectap4pt2: null,
-    pregunta5pt2: "",
-    respuesta1p5pt2: "",
-    respuesta2p5pt2: "",
-    respuesta3p5pt2: "",
-    respuesta4p5pt2: "",
-    respuestacorrectap5pt2: null,
-    // archivo_pt3Nombre: null,
-    archivo_pt3Nombre: "",
-    descripcionpt3: "",
-    pregunta1pt3: "",
-    respuesta1p1pt3: "",
-    respuesta2p1pt3: "",
-    respuesta3p1pt3: "",
-    respuesta4p1pt3: "",
-    respuestacorrectap1pt3: null,
-    pregunta2pt3: "",
-    respuesta1p2pt3: "",
-    respuesta2p2pt3: "",
-    respuesta3p2pt3: "",
-    respuesta4p2pt3: "",
-    respuestacorrectap2pt3: null,
-    pregunta3pt3: "",
-    respuesta1p3pt3: "",
-    respuesta2p3pt3: "",
-    respuesta3p3pt3: "",
-    respuesta4p3pt3: "",
-    respuestacorrectap3pt3: null,
-    pregunta4pt3: "",
-    respuesta1p4pt3: "",
-    respuesta2p4pt3: "",
-    respuesta3p4pt3: "",
-    respuesta4p4pt3: "",
-    respuestacorrectap4pt3: null,
-    pregunta5pt3: "",
-    respuesta1p5pt3: "",
-    respuesta2p5pt3: "",
-    respuesta3p5pt3: "",
-    respuesta4p5pt3: "",
-    respuestacorrectap5pt3: null,
-    // archivo_pt4Nombre: null,
-    archivo_pt4Nombre: "",
-    descripcionpt4: "",
-    pregunta1pt4: "",
-    respuesta1p1pt4: "",
-    respuesta2p1pt4: "",
-    respuesta3p1pt4: "",
-    respuesta4p1pt4: "",
-    respuestacorrectap1pt4: null,
-    pregunta2pt4: "",
-    respuesta1p2pt4: "",
-    respuesta2p2pt4: "",
-    respuesta3p2pt4: "",
-    respuesta4p2pt4: "",
-    respuestacorrectap2pt4: null,
-    pregunta3pt4: "",
-    respuesta1p3pt4: "",
-    respuesta2p3pt4: "",
-    respuesta3p3pt4: "",
-    respuesta4p3pt4: "",
-    respuestacorrectap3pt4: null,
-    pregunta4pt4: "",
-    respuesta1p4pt4: "",
-    respuesta2p4pt4: "",
-    respuesta3p4pt4: "",
-    respuesta4p4pt4: "",
-    respuestacorrectap4pt4: null,
-    pregunta5pt4: "",
-    respuesta1p5pt4: "",
-    respuesta2p5pt4: "",
-    respuesta3p5pt4: "",
-    respuesta4p5pt4: "",
-    respuestacorrectap5pt4: null,
-    // archivo_pt5Nombre: null,
-    archivo_pt5Nombre: "",
-    descripcionpt5: "",
-    pregunta1pt5: "",
-    respuesta1p1pt5: "",
-    respuesta2p1pt5: "",
-    respuesta3p1pt5: "",
-    respuesta4p1pt5: "",
-    respuestacorrectap1pt5: null,
-    pregunta2pt5: "",
-    respuesta1p2pt5: "",
-    respuesta2p2pt5: "",
-    respuesta3p2pt5: "",
-    respuesta4p2pt5: "",
-    respuestacorrectap2pt5: null,
-    pregunta3pt5: "",
-    respuesta1p3pt5: "",
-    respuesta2p3pt5: "",
-    respuesta3p3pt5: "",
-    respuesta4p3pt5: "",
-    respuestacorrectap3pt5: null,
-    pregunta4pt5: "",
-    respuesta1p4pt5: "",
-    respuesta2p4pt5: "",
-    respuesta3p4pt5: "",
-    respuesta4p4pt5: "",
-    respuestacorrectap4pt5: null,
-    pregunta5pt5: "",
-    respuesta1p5pt5: "",
-    respuesta2p5pt5: "",
-    respuesta3p5pt5: "",
-    respuesta4p5pt5: "",
-    respuestacorrectap5pt5: null,
-    estado: true,
-  };
-  courseForm: FormGroup;
+export class Crear_curso implements OnInit {
+  activeTab: "info" | "modules" = "info";
+  selectedModuleIndex = 0;
   showError = false;
   showSuccess = false;
   alertMessage = "";
+  isSubmitting = false;
+  isProfesorEditable = true;
+  userRol = "";
+  userId = "";
+  userEmail = "";
+  userName = "";
+  userLastName = "";
+  selectedCourseIcon: File | null = null;
+
+  readonly courseForm = this.fb.group({
+    course: this.fb.group({
+      nombre: ["", [Validators.required, Validators.maxLength(150)]],
+      profesorNombre: ["", [Validators.required, Validators.maxLength(150)]],
+      profesorEmail: ["", [Validators.required, Validators.email]],
+      descripcionGeneral: ["", [Validators.required, Validators.maxLength(1200)]],
+      duracion: [0, [Validators.required, Validators.min(1)]],
+      activo: [true],
+    }),
+    modules: this.fb.array([]),
+  });
 
   constructor(
+    private fb: FormBuilder,
     private router: Router,
     public appSettings: AppSettings,
-    private authService: AuthService
-  ) {
-    this.emailusuario = this.userEmail;
-  }
+    private authService: AuthService,
+    private usersApiService: UsersApiService,
+    private filesApiService: FilesApiService,
+    private coursesApiService: CoursesApiService,
+    private courseModulesApiService: CourseModulesApiService,
+    private moduleResourcesApiService: ModuleResourcesApiService,
+    private questionsApiService: QuestionsApiService,
+    private questionOptionsApiService: QuestionOptionsApiService
+  ) {}
 
-  ngOnInit() {
-    this.userRol = localStorage.getItem("userRol");
-    this.userEmail = localStorage.getItem("userEmail");
+  ngOnInit(): void {
+    this.userRol = localStorage.getItem("userRol") || "estudiante";
+    this.userId = localStorage.getItem("user_Id") || "";
+    this.userEmail = localStorage.getItem("userEmail") || "";
+    this.userName = localStorage.getItem("userName") || "";
+    this.userLastName = localStorage.getItem("userLastName") || "";
+
+    const courseGroup = this.courseGroup;
 
     if (this.userRol === "docente") {
-      this.userName = localStorage.getItem("userName");
-      this.userLastName = localStorage.getItem("userLastName");
-      this.user_Id = localStorage.getItem("user_Id");
-      this.cursoData.nombre_profesor = `${this.userName} ${this.userLastName}`;
-      this.cursoData.profesorEmail = this.userEmail;
+      courseGroup.patchValue({
+        profesorNombre: `${this.userName} ${this.userLastName}`.trim(),
+        profesorEmail: this.userEmail,
+      });
+      courseGroup.controls["profesorNombre"].disable();
+      courseGroup.controls["profesorEmail"].disable();
       this.isProfesorEditable = false;
-    } else if (this.userRol === "admin") {
+    } else {
       this.isProfesorEditable = true;
     }
+
+    this.addModule();
   }
 
-  validateFile(file: File, allowedTypes: string[]): boolean {
-    return allowedTypes.includes(file.type);
+  get courseGroup(): FormGroup {
+    return this.courseForm.get("course") as FormGroup;
   }
 
-  validateCursoData(): boolean {
-    const requiredFields = [
-      "nombre_curso",
-      "nombre_profesor",
-      "descripcion",
-      "tiempoestimado",
-      // 'iconocursoNombre',
-      // 'archivo_pt1Nombre',
-      "descripcionpt1",
-      "pregunta1pt1",
-      "respuesta1p1pt1",
-      "respuesta2p1pt1",
-      "respuesta3p1pt1",
-      "respuesta4p1pt1",
-      // 'respuestacorrectap1pt1',
-      "pregunta2pt1",
-      "respuesta1p2pt1",
-      "respuesta2p2pt1",
-      "respuesta3p2pt1",
-      "respuesta4p2pt1",
-      // 'respuestacorrectap2pt1',
-      "pregunta3pt1",
-      "respuesta1p3pt1",
-      "respuesta2p3pt1",
-      "respuesta3p3pt1",
-      "respuesta4p3pt1",
-      // 'respuestacorrectap3pt1',
-      "pregunta4pt1",
-      "respuesta1p4pt1",
-      "respuesta2p4pt1",
-      "respuesta3p4pt1",
-      "respuesta4p4pt1",
-      // 'respuestacorrectap4pt1',
-      "pregunta5pt1",
-      "respuesta1p5pt1",
-      "respuesta2p5pt1",
-      "respuesta3p5pt1",
-      "respuesta4p5pt1",
-      // 'respuestacorrectap5pt1',
-      // 'archivo_pt2Nombre',
-      "descripcionpt2",
-      "pregunta1pt2",
-      "respuesta1p1pt2",
-      "respuesta2p1pt2",
-      "respuesta3p1pt2",
-      "respuesta4p1pt2",
-      // 'respuestacorrectap1pt2',
-      "pregunta2pt2",
-      "respuesta1p2pt2",
-      "respuesta2p2pt2",
-      "respuesta3p2pt2",
-      "respuesta4p2pt2",
-      // 'respuestacorrectap2pt2',
-      "pregunta3pt2",
-      "respuesta1p3pt2",
-      "respuesta2p3pt2",
-      "respuesta3p3pt2",
-      "respuesta4p3pt2",
-      // 'respuestacorrectap3pt2',
-      "pregunta4pt2",
-      "respuesta1p4pt2",
-      "respuesta2p4pt2",
-      "respuesta3p4pt2",
-      "respuesta4p4pt2",
-      // 'respuestacorrectap4pt2',
-      "pregunta5pt2",
-      "respuesta1p5pt2",
-      "respuesta2p5pt2",
-      "respuesta3p5pt2",
-      "respuesta4p5pt2",
-      // 'respuestacorrectap5pt2',
-      // 'archivo_pt3Nombre',
-      "descripcionpt3",
-      "pregunta1pt3",
-      "respuesta1p1pt3",
-      "respuesta2p1pt3",
-      "respuesta3p1pt3",
-      "respuesta4p1pt3",
-      // 'respuestacorrectap1pt3',
-      "pregunta2pt3",
-      "respuesta1p2pt3",
-      "respuesta2p2pt3",
-      "respuesta3p2pt3",
-      "respuesta4p2pt3",
-      // 'respuestacorrectap2pt3',
-      "pregunta3pt3",
-      "respuesta1p3pt3",
-      "respuesta2p3pt3",
-      "respuesta3p3pt3",
-      "respuesta4p3pt3",
-      // 'respuestacorrectap3pt3',
-      "pregunta4pt3",
-      "respuesta1p4pt3",
-      "respuesta2p4pt3",
-      "respuesta3p4pt3",
-      "respuesta4p4pt3",
-      // 'respuestacorrectap4pt3',
-      "pregunta5pt3",
-      "respuesta1p5pt3",
-      "respuesta2p5pt3",
-      "respuesta3p5pt3",
-      "respuesta4p5pt3",
-      // 'respuestacorrectap5pt3',
-      // 'archivo_pt4Nombre',
-      "descripcionpt4",
-      "pregunta1pt4",
-      "respuesta1p1pt4",
-      "respuesta2p1pt4",
-      "respuesta3p1pt4",
-      "respuesta4p1pt4",
-      // 'respuestacorrectap1pt4',
-      "pregunta2pt4",
-      "respuesta1p2pt4",
-      "respuesta2p2pt4",
-      "respuesta3p2pt4",
-      "respuesta4p2pt4",
-      // 'respuestacorrectap2pt4',
-      "pregunta3pt4",
-      "respuesta1p3pt4",
-      "respuesta2p3pt4",
-      "respuesta3p3pt4",
-      "respuesta4p3pt4",
-      // 'respuestacorrectap3pt4',
-      "pregunta4pt4",
-      "respuesta1p4pt4",
-      "respuesta2p4pt4",
-      "respuesta3p4pt4",
-      "respuesta4p4pt4",
-      // 'respuestacorrectap4pt4',
-      // 'pregunta5pt4',
-      "respuesta1p5pt4",
-      "respuesta2p5pt4",
-      "respuesta3p5pt4",
-      "respuesta4p5pt4",
-      // 'respuestacorrectap5pt4',
-      // 'archivo_pt5Nombre',
-      "descripcionpt5",
-      "pregunta1pt5",
-      "respuesta1p1pt5",
-      "respuesta2p1pt5",
-      "respuesta3p1pt5",
-      "respuesta4p1pt5",
-      // 'respuestacorrectap1pt5',
-      "pregunta2pt5",
-      "respuesta1p2pt5",
-      "respuesta2p2pt5",
-      "respuesta3p2pt5",
-      "respuesta4p2pt5",
-      // 'respuestacorrectap2pt5',
-      "pregunta3pt5",
-      "respuesta1p3pt5",
-      "respuesta2p3pt5",
-      "respuesta3p3pt5",
-      "respuesta4p3pt5",
-      // 'respuestacorrectap3pt5',
-      "pregunta4pt5",
-      "respuesta1p4pt5",
-      "respuesta2p4pt5",
-      "respuesta3p4pt5",
-      "respuesta4p4pt5",
-      // 'respuestacorrectap4pt5',
-      "pregunta5pt5",
-      "respuesta1p5pt5",
-      "respuesta2p5pt5",
-      "respuesta3p5pt5",
-      "respuesta4p5pt5",
-      // 'respuestacorrectap5pt5'
-    ];
-
-    for (const field of requiredFields) {
-      if (!this.cursoData[field] || this.cursoData[field].trim() === "") {
-        return false;
-      }
-    }
-
-    return true;
+  get modulesArray(): FormArray {
+    return this.courseForm.get("modules") as FormArray;
   }
 
-  formSubmit(f: NgForm) {
-    if (this.userRol === "admin" && this.cursoData.profesorEmail) {
-      this.userEmail = this.cursoData.profesorEmail;
-    }
+  moduleContentArray(moduleIndex: number): FormArray {
+    return this.getModuleControl(moduleIndex).get("contentBlocks") as FormArray;
+  }
 
-    if (!this.validateCursoData()) {
-      this.showErrorAlert(
-        "Por favor, completa todos los campos para crear el curso."
-      );
+  moduleQuestionsArray(moduleIndex: number): FormArray {
+    return this.getModuleControl(moduleIndex).get("questions") as FormArray;
+  }
+
+  questionOptionsArray(moduleIndex: number, questionIndex: number): FormArray {
+    return this.getQuestionControl(moduleIndex, questionIndex).get(
+      "options"
+    ) as FormArray;
+  }
+
+  addModule(): void {
+    this.modulesArray.push(this.createModuleGroup());
+    const moduleIndex = this.modulesArray.length - 1;
+    this.addContentBlock(moduleIndex, "text");
+    this.addQuestion(moduleIndex);
+    this.selectedModuleIndex = moduleIndex;
+  }
+
+  removeModule(moduleIndex: number): void {
+    this.modulesArray.removeAt(moduleIndex);
+    this.reindexModules();
+    this.selectedModuleIndex = Math.max(
+      0,
+      Math.min(this.selectedModuleIndex, this.modulesArray.length - 1)
+    );
+  }
+
+  addContentBlock(moduleIndex: number, type: ContentType): void {
+    this.moduleContentArray(moduleIndex).push(this.createContentBlockGroup(type));
+  }
+
+  removeContentBlock(moduleIndex: number, contentIndex: number): void {
+    this.moduleContentArray(moduleIndex).removeAt(contentIndex);
+  }
+
+  addQuestion(moduleIndex: number): void {
+    const questions = this.moduleQuestionsArray(moduleIndex);
+    questions.push(this.createQuestionGroup());
+    const questionIndex = questions.length - 1;
+    this.ensureOptionsForQuestionType(moduleIndex, questionIndex, "multiple_choice");
+  }
+
+  removeQuestion(moduleIndex: number, questionIndex: number): void {
+    this.moduleQuestionsArray(moduleIndex).removeAt(questionIndex);
+    this.reindexQuestions(moduleIndex);
+  }
+
+  addOption(moduleIndex: number, questionIndex: number): void {
+    this.questionOptionsArray(moduleIndex, questionIndex).push(
+      this.createOptionGroup()
+    );
+    this.reindexOptions(moduleIndex, questionIndex);
+  }
+
+  removeOption(moduleIndex: number, questionIndex: number, optionIndex: number): void {
+    this.questionOptionsArray(moduleIndex, questionIndex).removeAt(optionIndex);
+    this.reindexOptions(moduleIndex, questionIndex);
+  }
+
+  onQuestionTypeChange(
+    moduleIndex: number,
+    questionIndex: number,
+    type: QuestionType
+  ): void {
+    this.ensureOptionsForQuestionType(moduleIndex, questionIndex, type);
+  }
+
+  onCourseIconSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.selectedCourseIcon = input.files?.[0] || null;
+  }
+
+  onContentFileSelected(
+    event: Event,
+    moduleIndex: number,
+    contentIndex: number
+  ): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    this.moduleContentArray(moduleIndex)
+      .at(contentIndex)
+      .get("file")
+      ?.setValue(file);
+  }
+
+  switchTab(tab: "info" | "modules"): void {
+    this.activeTab = tab;
+  }
+
+  selectModule(moduleIndex: number): void {
+    this.selectedModuleIndex = moduleIndex;
+  }
+
+  async submit(): Promise<void> {
+    if (this.courseForm.invalid) {
+      this.courseForm.markAllAsTouched();
+      this.showErrorAlert("Completa la información del curso y de los módulos.");
       return;
     }
 
-    const uploadTasks: Promise<any>[] = [];
-
-    if (this.cursoArchivos.iconocurso instanceof File) {
-      if (this.validateFile(this.cursoArchivos.iconocurso, ["image/jpeg"])) {
-        uploadTasks.push(
-          this.uploadFile(this.cursoArchivos.iconocurso, "iconocursoNombre")
-        );
-      } else {
-        this.showErrorAlert(
-          "El icono del curso debe ser una imagen en formato JPG."
-        );
-        return;
-      }
+    if (!this.modulesArray.length) {
+      this.showErrorAlert("Debes crear al menos un módulo.");
+      return;
     }
 
-    [
-      "archivo_pt1",
-      "archivo_pt2",
-      "archivo_pt3",
-      "archivo_pt4",
-      "archivo_pt5",
-    ].forEach((archivo, index) => {
-      if (this.cursoArchivos[archivo] instanceof File) {
-        const fileNameKey = `archivo_pt${index + 1}Nombre`;
-        uploadTasks.push(
-          this.uploadFile(this.cursoArchivos[archivo], fileNameKey)
+    this.isSubmitting = true;
+
+    try {
+      const creatorId = await this.resolveCreatorId();
+      const iconFileId = this.selectedCourseIcon
+        ? await this.uploadAndRegisterFile(this.selectedCourseIcon)
+        : null;
+
+      const courseRaw = this.courseGroup.getRawValue();
+      const createdCourse = await firstValueFrom(
+        this.coursesApiService.create({
+          nombre: courseRaw["nombre"],
+          descripcionGeneral: courseRaw["descripcionGeneral"],
+          iconFileId,
+          creadoPorId: creatorId,
+          duracion: Number(courseRaw["duracion"] || 0),
+          activo: !!courseRaw["activo"],
+        })
+      );
+
+      for (let moduleIndex = 0; moduleIndex < this.modulesArray.length; moduleIndex++) {
+        const moduleRaw = this.getModuleControl(moduleIndex).getRawValue();
+
+        const textBlocks = (moduleRaw["contentBlocks"] || [])
+          .filter((block: any) => block.type === "text" && block.text?.trim())
+          .map((block: any) => block.text.trim());
+
+        const createdModule = await firstValueFrom(
+          this.courseModulesApiService.create({
+            courseId: createdCourse.id,
+            titulo: moduleRaw["titulo"],
+            descripcion: textBlocks.join("\n\n") || moduleRaw["descripcion"] || null,
+            orden: moduleIndex + 1,
+            activo: true,
+          })
         );
-      }
-    });
 
-    Promise.all(uploadTasks)
-      .then(() => {
-        if (f.valid) {
-          this.authService
-            .crearcurso(
-              this.cursoData.nombre_curso,
-              this.cursoData.nombre_profesor,
-              this.userEmail,
-              this.cursoData.descripcion,
-              this.cursoData.tiempoestimado,
-              this.cursoData.iconocursoNombre,
-              this.cursoData.archivo_pt1Nombre,
-              this.cursoData.descripcionpt1,
-              this.cursoData.pregunta1pt1,
-              this.cursoData.respuesta1p1pt1,
-              this.cursoData.respuesta2p1pt1,
-              this.cursoData.respuesta3p1pt1,
-              this.cursoData.respuesta4p1pt1,
-              this.cursoData.respuestacorrectap1pt1,
-              this.cursoData.pregunta2pt1,
-              this.cursoData.respuesta1p2pt1,
-              this.cursoData.respuesta2p2pt1,
-              this.cursoData.respuesta3p2pt1,
-              this.cursoData.respuesta4p2pt1,
-              this.cursoData.respuestacorrectap2pt1,
-              this.cursoData.pregunta3pt1,
-              this.cursoData.respuesta1p3pt1,
-              this.cursoData.respuesta2p3pt1,
-              this.cursoData.respuesta3p3pt1,
-              this.cursoData.respuesta4p3pt1,
-              this.cursoData.respuestacorrectap3pt1,
-              this.cursoData.pregunta4pt1,
-              this.cursoData.respuesta1p4pt1,
-              this.cursoData.respuesta2p4pt1,
-              this.cursoData.respuesta3p4pt1,
-              this.cursoData.respuesta4p4pt1,
-              this.cursoData.respuestacorrectap4pt1,
-              this.cursoData.pregunta5pt1,
-              this.cursoData.respuesta1p5pt1,
-              this.cursoData.respuesta2p5pt1,
-              this.cursoData.respuesta3p5pt1,
-              this.cursoData.respuesta4p5pt1,
-              this.cursoData.respuestacorrectap5pt1,
-              this.cursoData.archivo_pt2Nombre,
-              this.cursoData.descripcionpt2,
-              this.cursoData.pregunta1pt2,
-              this.cursoData.respuesta1p1pt2,
-              this.cursoData.respuesta2p1pt2,
-              this.cursoData.respuesta3p1pt2,
-              this.cursoData.respuesta4p1pt2,
-              this.cursoData.respuestacorrectap1pt2,
-              this.cursoData.pregunta2pt2,
-              this.cursoData.respuesta1p2pt2,
-              this.cursoData.respuesta2p2pt2,
-              this.cursoData.respuesta3p2pt2,
-              this.cursoData.respuesta4p2pt2,
-              this.cursoData.respuestacorrectap2pt2,
-              this.cursoData.pregunta3pt2,
-              this.cursoData.respuesta1p3pt2,
-              this.cursoData.respuesta2p3pt2,
-              this.cursoData.respuesta3p3pt2,
-              this.cursoData.respuesta4p3pt2,
-              this.cursoData.respuestacorrectap3pt2,
-              this.cursoData.pregunta4pt2,
-              this.cursoData.respuesta1p4pt2,
-              this.cursoData.respuesta2p4pt2,
-              this.cursoData.respuesta3p4pt2,
-              this.cursoData.respuesta4p4pt2,
-              this.cursoData.respuestacorrectap4pt2,
-              this.cursoData.pregunta5pt2,
-              this.cursoData.respuesta1p5pt2,
-              this.cursoData.respuesta2p5pt2,
-              this.cursoData.respuesta3p5pt2,
-              this.cursoData.respuesta4p5pt2,
-              this.cursoData.respuestacorrectap5pt2,
-              this.cursoData.archivo_pt3Nombre,
-              this.cursoData.descripcionpt3,
-              this.cursoData.pregunta1pt3,
-              this.cursoData.respuesta1p1pt3,
-              this.cursoData.respuesta2p1pt3,
-              this.cursoData.respuesta3p1pt3,
-              this.cursoData.respuesta4p1pt3,
-              this.cursoData.respuestacorrectap1pt3,
-              this.cursoData.pregunta2pt3,
-              this.cursoData.respuesta1p2pt3,
-              this.cursoData.respuesta2p2pt3,
-              this.cursoData.respuesta3p2pt3,
-              this.cursoData.respuesta4p2pt3,
-              this.cursoData.respuestacorrectap2pt3,
-              this.cursoData.pregunta3pt3,
-              this.cursoData.respuesta1p3pt3,
-              this.cursoData.respuesta2p3pt3,
-              this.cursoData.respuesta3p3pt3,
-              this.cursoData.respuesta4p3pt3,
-              this.cursoData.respuestacorrectap3pt3,
-              this.cursoData.pregunta4pt3,
-              this.cursoData.respuesta1p4pt3,
-              this.cursoData.respuesta2p4pt3,
-              this.cursoData.respuesta3p4pt3,
-              this.cursoData.respuesta4p4pt3,
-              this.cursoData.respuestacorrectap4pt3,
-              this.cursoData.pregunta5pt3,
-              this.cursoData.respuesta1p5pt3,
-              this.cursoData.respuesta2p5pt3,
-              this.cursoData.respuesta3p5pt3,
-              this.cursoData.respuesta4p5pt3,
-              this.cursoData.respuestacorrectap5pt3,
-              this.cursoData.archivo_pt4Nombre,
-              this.cursoData.descripcionpt4,
-              this.cursoData.pregunta1pt4,
-              this.cursoData.respuesta1p1pt4,
-              this.cursoData.respuesta2p1pt4,
-              this.cursoData.respuesta3p1pt4,
-              this.cursoData.respuesta4p1pt4,
-              this.cursoData.respuestacorrectap1pt4,
-              this.cursoData.pregunta2pt4,
-              this.cursoData.respuesta1p2pt4,
-              this.cursoData.respuesta2p2pt4,
-              this.cursoData.respuesta3p2pt4,
-              this.cursoData.respuesta4p2pt4,
-              this.cursoData.respuestacorrectap2pt4,
-              this.cursoData.pregunta3pt4,
-              this.cursoData.respuesta1p3pt4,
-              this.cursoData.respuesta2p3pt4,
-              this.cursoData.respuesta3p3pt4,
-              this.cursoData.respuesta4p3pt4,
-              this.cursoData.respuestacorrectap3pt4,
-              this.cursoData.pregunta4pt4,
-              this.cursoData.respuesta1p4pt4,
-              this.cursoData.respuesta2p4pt4,
-              this.cursoData.respuesta3p4pt4,
-              this.cursoData.respuesta4p4pt4,
-              this.cursoData.respuestacorrectap4pt4,
-              this.cursoData.pregunta5pt4,
-              this.cursoData.respuesta1p5pt4,
-              this.cursoData.respuesta2p5pt4,
-              this.cursoData.respuesta3p5pt4,
-              this.cursoData.respuesta4p5pt4,
-              this.cursoData.respuestacorrectap5pt4,
-              this.cursoData.archivo_pt5Nombre,
-              this.cursoData.descripcionpt5,
-              this.cursoData.pregunta1pt5,
-              this.cursoData.respuesta1p1pt5,
-              this.cursoData.respuesta2p1pt5,
-              this.cursoData.respuesta3p1pt5,
-              this.cursoData.respuesta4p1pt5,
-              this.cursoData.respuestacorrectap1pt5,
-              this.cursoData.pregunta2pt5,
-              this.cursoData.respuesta1p2pt5,
-              this.cursoData.respuesta2p2pt5,
-              this.cursoData.respuesta3p2pt5,
-              this.cursoData.respuesta4p2pt5,
-              this.cursoData.respuestacorrectap2pt5,
-              this.cursoData.pregunta3pt5,
-              this.cursoData.respuesta1p3pt5,
-              this.cursoData.respuesta2p3pt5,
-              this.cursoData.respuesta3p3pt5,
-              this.cursoData.respuesta4p3pt5,
-              this.cursoData.respuestacorrectap3pt5,
-              this.cursoData.pregunta4pt5,
-              this.cursoData.respuesta1p4pt5,
-              this.cursoData.respuesta2p4pt5,
-              this.cursoData.respuesta3p4pt5,
-              this.cursoData.respuesta4p4pt5,
-              this.cursoData.respuestacorrectap4pt5,
-              this.cursoData.pregunta5pt5,
-              this.cursoData.respuesta1p5pt5,
-              this.cursoData.respuesta2p5pt5,
-              this.cursoData.respuesta3p5pt5,
-              this.cursoData.respuesta4p5pt5,
-              this.cursoData.respuestacorrectap5pt5,
-              this.cursoData.estado
-            )
-            .subscribe(
-              (response) => {
-                this.showSuccessAlert("Curso creado exitosamente.");
-                localStorage.removeItem("cursoData");
-                localStorage.removeItem("cursoArchivos");
-                this.router.navigate(["/buscar-cursos"]);
-              },
-              (error) => {
-                console.error("Error al crear el curso:", error);
-                this.showErrorAlert(
-                  "Error al crear el curso. Inténtalo de nuevo."
-                );
-              }
-            );
-        }
-      })
-      .catch((error) => {
-        this.showErrorAlert(
-          "Error al guardar los archivos. Inténtalo de nuevo."
-        );
-      });
-  }
+        const contentBlocks = moduleRaw["contentBlocks"] || [];
+        for (let contentIndex = 0; contentIndex < contentBlocks.length; contentIndex++) {
+          const block = contentBlocks[contentIndex];
 
-  ngAfterViewInit() {
-    new Tagify(document.querySelector("input[name=tags]"));
-  }
-
-  uploadFile(file: File, fileNameKey: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      this.authService.uploadDoc(file).subscribe(
-        (response: any) => {
-          if (response && response.file && response.file.filename) {
-            this.cursoData[fileNameKey] = response.file.filename;
-            resolve(response.file.filename);
-          } else {
-            reject("No se devolvió el nombre del archivo.");
+          if (block.type === "text") {
+            continue;
           }
-        },
-        (error) => {
-          console.error(`Error al subir archivo ${fileNameKey}:`, error);
-          reject(error);
+
+          if (block.type === "image") {
+            if (!block.file) {
+              continue;
+            }
+
+            const fileId = await this.uploadAndRegisterFile(block.file);
+            await firstValueFrom(
+              this.moduleResourcesApiService.create({
+                moduleId: createdModule.id,
+                fileId,
+                titulo: block.titulo || "Imagen del módulo",
+                descripcion: block.descripcion || null,
+                tipoRecurso: "imagen",
+                orden: contentIndex + 1,
+              })
+            );
+          }
+
+                    if (block.type === "video") {
+            if (!block.url?.trim()) {
+              continue;
+            }
+
+            const fileRecord = await firstValueFrom(
+              this.filesApiService.create({
+                originalName: block.titulo || "Video de YouTube",
+                storedName: block.titulo || "Video de YouTube",
+                path: block.url.trim(),
+                mimeType: "text/uri-list",
+                extension: "url",
+                sizeBytes: null,
+              })
+            );
+
+            await firstValueFrom(
+              this.moduleResourcesApiService.create({
+                moduleId: createdModule.id,
+                fileId: fileRecord.id,
+                titulo: block.titulo || "Video de YouTube",
+                descripcion: block.descripcion || null,
+                tipoRecurso: "video",
+                orden: contentIndex + 1,
+              })
+            );
+          }
+
+          if (block.type === "python") {
+            const pythonCode = (block.code || "").trim();
+
+            if (!pythonCode) {
+              continue;
+            }
+
+            const fileRecord = await firstValueFrom(
+              this.filesApiService.create({
+                originalName: `${block.titulo || "terminal-python"}.py`,
+                storedName: `${block.titulo || "terminal-python"}.py`,
+                path: this.buildInlinePythonPath(pythonCode),
+                mimeType: "text/x-python",
+                extension: "py",
+                sizeBytes: String(pythonCode.length),
+              })
+            );
+
+            await firstValueFrom(
+              this.moduleResourcesApiService.create({
+                moduleId: createdModule.id,
+                fileId: fileRecord.id,
+                titulo: block.titulo || "Terminal Python",
+                descripcion: block.descripcion || null,
+                tipoRecurso: "python",
+                orden: contentIndex + 1,
+              })
+            );
+          }
         }
+
+        const questions = moduleRaw["questions"] || [];
+        for (let questionIndex = 0; questionIndex < questions.length; questionIndex++) {
+          const question = questions[questionIndex];
+
+          const createdQuestion = await firstValueFrom(
+            this.questionsApiService.create({
+              moduleId: createdModule.id,
+              enunciado: question.enunciado,
+              tipoPregunta: question.tipoPregunta,
+              orden: questionIndex + 1,
+              puntaje: Number(question.puntaje || 1),
+            })
+          );
+
+          if (question.tipoPregunta === "open_text") {
+            continue;
+          }
+
+          const options = question.options || [];
+          for (let optionIndex = 0; optionIndex < options.length; optionIndex++) {
+            const option = options[optionIndex];
+
+            await firstValueFrom(
+              this.questionOptionsApiService.create({
+                questionId: createdQuestion.id,
+                texto: option.texto,
+                esCorrecta: !!option.esCorrecta,
+                orden: optionIndex + 1,
+              })
+            );
+          }
+        }
+      }
+
+      this.showSuccessAlert("Curso creado exitosamente.");
+      this.courseForm.reset();
+      this.modulesArray.clear();
+      this.selectedCourseIcon = null;
+      this.addModule();
+      this.activeTab = "info";
+      this.router.navigate(["/configuracion_curso"]);
+    } catch (error) {
+      console.error("Error al crear el curso:", error);
+      this.showErrorAlert(
+        "No se pudo crear el curso con toda su estructura. Revisa los datos e intÃ©ntalo nuevamente."
       );
+    } finally {
+      this.isSubmitting = false;
+    }
+  }
+
+  trackByIndex(index: number): number {
+    return index;
+  }
+
+  isSelectedModule(moduleIndex: number): boolean {
+    return this.selectedModuleIndex === moduleIndex;
+  }
+
+  getModuleTitle(moduleIndex: number): string {
+    return this.getModuleControl(moduleIndex).get("titulo")?.value || "Nuevo módulo";
+  }
+
+  getContentTypeLabel(type: ContentType): string {
+    if (type === "text") {
+      return "Bloque de texto";
+    }
+
+        if (type === "image") {
+      return "Imagen";
+    }
+
+    if (type === "python") {
+      return "Terminal Python";
+    }
+
+    return "Video de YouTube";
+  }
+
+  private createModuleGroup(): FormGroup {
+    return this.fb.group({
+      titulo: ["", [Validators.required, Validators.maxLength(150)]],
+      descripcion: [""],
+      orden: [this.modulesArray.length + 1],
+      contentBlocks: this.fb.array([]),
+      questions: this.fb.array([]),
     });
   }
 
-  onFileChange(event: any, field: string, fileName: string) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      if (file instanceof File) {
-        const fileExtension = file.name.split(".").pop();
-        const finalFileName = `${fileName}.${fileExtension}`;
-        const newFile = new File([file], finalFileName, { type: file.type });
-        this.cursoArchivos[field] = newFile;
-        this.cursoArchivos[`${field}Nombre`] = finalFileName;
-        this.saveToLocalStorage();
-      } else {
-        console.error("El archivo seleccionado no es válido.");
+  private createContentBlockGroup(type: ContentType): FormGroup {
+    return this.fb.group({
+      type: [type, Validators.required],
+      titulo: [""],
+      descripcion: [""],
+      text: [''],
+      url: [''],
+      code: ['print("Hola desde Python")'],
+      file: [null],
+    });
+  }
+
+  private createQuestionGroup(): FormGroup {
+    return this.fb.group({
+      enunciado: ["", [Validators.required, Validators.maxLength(500)]],
+      tipoPregunta: ["multiple_choice", Validators.required],
+      puntaje: [1, [Validators.required, Validators.min(1)]],
+      options: this.fb.array([]),
+    });
+  }
+
+  private createOptionGroup(
+    texto = "",
+    esCorrecta = false,
+    orden = 1
+  ): FormGroup {
+    return this.fb.group({
+      texto: [texto, [Validators.required, Validators.maxLength(250)]],
+      esCorrecta: [esCorrecta],
+      orden: [orden],
+    });
+  }
+
+  private getModuleControl(moduleIndex: number): FormGroup {
+    return this.modulesArray.at(moduleIndex) as FormGroup;
+  }
+
+  private getQuestionControl(moduleIndex: number, questionIndex: number): FormGroup {
+    return this.moduleQuestionsArray(moduleIndex).at(questionIndex) as FormGroup;
+  }
+
+  private ensureOptionsForQuestionType(
+    moduleIndex: number,
+    questionIndex: number,
+    type: QuestionType
+  ): void {
+    const options = this.questionOptionsArray(moduleIndex, questionIndex);
+
+    while (options.length) {
+      options.removeAt(0);
+    }
+
+    if (type === "open_text") {
+      return;
+    }
+
+    if (type === "true_false") {
+      options.push(this.createOptionGroup("Verdadero", true, 1));
+      options.push(this.createOptionGroup("Falso", false, 2));
+      return;
+    }
+
+    options.push(this.createOptionGroup("", false, 1));
+    options.push(this.createOptionGroup("", false, 2));
+  }
+
+  private reindexModules(): void {
+    this.modulesArray.controls.forEach((control, index) => {
+      control.get("orden")?.setValue(index + 1);
+    });
+  }
+
+  private reindexQuestions(moduleIndex: number): void {
+    const questions = this.moduleQuestionsArray(moduleIndex);
+    questions.controls.forEach((control) => {
+      const options = control.get("options") as FormArray;
+      options.controls.forEach((optionControl, optionIndex) => {
+        optionControl.get("orden")?.setValue(optionIndex + 1);
+      });
+    });
+  }
+
+  private reindexOptions(moduleIndex: number, questionIndex: number): void {
+    this.questionOptionsArray(moduleIndex, questionIndex).controls.forEach(
+      (control, index) => {
+        control.get("orden")?.setValue(index + 1);
       }
+    );
+  }
+
+  private async resolveCreatorId(): Promise<string | null> {
+    if (this.userRol === "docente") {
+      return this.userId || null;
     }
-  }
 
-  private saveToLocalStorage() {
-    localStorage.setItem("cursoData", JSON.stringify(this.cursoData));
-  }
+    const profesorEmail = this.courseGroup.getRawValue()["profesorEmail"];
 
-  marcarComoCompletada(sectionId: string) {
-    if (!this.completedSections.includes(sectionId)) {
-      this.completedSections.push(sectionId);
+    if (!profesorEmail) {
+      return this.userId || null;
     }
-  }
 
-  isSectionCompleted(sectionId: string): boolean {
-    return this.completedSections.includes(sectionId);
-  }
+    const users = await firstValueFrom(this.usersApiService.getAll());
+    const docente = users.find((user) => user.email === profesorEmail);
 
-  isSectionActive(sectionId: string): boolean {
-    const section = document.getElementById(sectionId);
-    if (section) {
-      const rect = section.getBoundingClientRect();
-      return rect.top <= 0 && rect.bottom > 0;
+    if (!docente) {
+      throw new Error("No se encontró un usuario docente/admin con ese correo.");
     }
-    return false;
+
+    return docente.id;
   }
 
-  validateNumberInput(event: KeyboardEvent): void {
-    const inputChar = String.fromCharCode(event.keyCode);
+    private buildInlinePythonPath(code: string): string {
+    return `inline-python:${btoa(unescape(encodeURIComponent(code)))}`;
+  }
 
-    if (!/^\d+$/.test(inputChar)) {
-      event.preventDefault();
+  private async uploadAndRegisterFile(file: File): Promise<string> {
+    const uploadResponse = await firstValueFrom(this.authService.uploadDoc(file));
+    const uploadedFile = uploadResponse?.file || null;
+
+    if (uploadedFile?.id) {
+      return String(uploadedFile.id);
     }
+
+    const uploadedFileName =
+      uploadedFile?.storedName ||
+      uploadedFile?.filename ||
+      uploadResponse?.filename ||
+      file.name;
+
+    const fileRecord = await firstValueFrom(
+      this.filesApiService.create({
+        originalName: uploadedFile?.originalName || file.name,
+        storedName: uploadedFileName,
+        path: uploadedFile?.path || `/uploads/${uploadedFileName}`,
+        mimeType: uploadedFile?.mimeType || file.type || null,
+        extension: uploadedFile?.extension || file.name.split(".").pop() || null,
+        sizeBytes: uploadedFile?.sizeBytes || String(file.size),
+      })
+    );
+
+    return fileRecord.id;
   }
 
-  removeNegativeNumbers(): void {
-    if (this.cursoData.tiempoestimado && this.cursoData.tiempoestimado < 0) {
-      this.cursoData.tiempoestimado = this.cursoData.tiempoestimado.replace(
-        /-/g,
-        ""
-      );
-    }
+  isControlInvalid(control: AbstractControl | null): boolean {
+    return !!control && control.invalid && (control.dirty || control.touched);
   }
 
-  @HostListener("window:scroll", ["$event"])
-  onScroll(event: Event): void {
-    const sectionIds = [
-      "datos-curso",
-      "primera-fase",
-      "segunda-fase",
-      "tercera-fase",
-      "cuarta-fase",
-      "quinta-fase",
-    ];
-
-    for (const sectionId of sectionIds) {
-      if (this.isSectionActive(sectionId)) {
-        this.marcarComoCompletada(sectionId);
-        break;
-      }
-    }
-  }
-
-  private showErrorAlert(message: string) {
+  private showErrorAlert(message: string): void {
     this.showError = true;
+    this.showSuccess = false;
     this.alertMessage = message;
-    setTimeout(() => {
-      this.showError = false;
-      this.alertMessage = "";
-    }, 5000);
   }
 
-  private showSuccessAlert(message: string) {
+  private showSuccessAlert(message: string): void {
     this.showSuccess = true;
+    this.showError = false;
     this.alertMessage = message;
-    setTimeout(() => {
-      this.showSuccess = false;
-      this.alertMessage = "";
-    }, 5000);
   }
 }
+

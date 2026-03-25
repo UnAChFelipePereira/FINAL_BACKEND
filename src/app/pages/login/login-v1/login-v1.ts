@@ -27,33 +27,47 @@ export class LoginV1Page implements OnDestroy {
   ngOnDestroy() {
     this.appSettings.appEmpty = false;
   }
+
   formSubmit(f: NgForm) {
-    if (f.valid) {
-      const formData = f.value;
-      this.authService.login(formData.email, formData.password).subscribe(
-        (response) => {
-          console.log("Respuesta del inicio de sesión:", response);
-          localStorage.setItem("user_Id", response.user._id);
-          localStorage.setItem("userRol", response.user.rol);
-          this.router.navigate(["inicio"]);
-        },
-        (error) => {
-          const errorMessage = error.error.message;
-          if (errorMessage.includes("Cuenta no activada")) {
-            this.showErrorAlert(
-              "Cuenta no activada. Por favor, verifica tu correo electrónico."
-            );
-          } else if (errorMessage.includes("Contraseña incorrecta")) {
-            this.showErrorAlert("Contraseña incorrecta.");
-          } else if (errorMessage.includes("Usuario no encontrado")) {
-            this.showErrorAlert("Usuario no encontrado.");
-          } else {
-            this.showErrorAlert("Correo o contraseña incorrecta.");
-          }
-          console.error("Error al iniciar sesión:", error);
-        }
-      );
+    if (!f.valid) {
+      return;
     }
+
+    const formData = f.value;
+
+    this.authService.login(formData.email, formData.password).subscribe({
+      next: (response) => {
+        const userId = response?.user?.id || response?.user?._id || "";
+        const userRol = response?.user?.rol || response?.user?.role || "";
+
+        if (userId) {
+          localStorage.setItem("user_Id", userId);
+        }
+
+        if (userRol) {
+          localStorage.setItem("userRol", userRol);
+        }
+
+        this.router.navigate(["inicio"]);
+      },
+      error: (error) => {
+        const errorMessage = error?.error?.message || "";
+
+        if (errorMessage.includes("Cuenta no activada")) {
+          this.showErrorAlert(
+            "Cuenta no activada. Por favor, verifica tu correo electrónico."
+          );
+        } else if (errorMessage.includes("Contraseña incorrecta")) {
+          this.showErrorAlert("Contraseña incorrecta.");
+        } else if (errorMessage.includes("Usuario no encontrado")) {
+          this.showErrorAlert("Usuario no encontrado.");
+        } else {
+          this.showErrorAlert("Correo o contraseña incorrecta.");
+        }
+
+        console.error("Error al iniciar sesión:", error);
+      },
+    });
   }
 
   showErrorAlert(message: string) {

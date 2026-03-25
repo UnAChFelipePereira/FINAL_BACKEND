@@ -3,6 +3,7 @@ import { Router, NavigationEnd, ActivatedRoute } from "@angular/router";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { BrowserModule, Title } from "@angular/platform-browser";
 import { HttpClientModule } from "@angular/common/http";
+import { HTTP_INTERCEPTORS } from "@angular/common/http";
 import { AppRoutingModule } from "./app-routing.module";
 import { NgModule } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
@@ -16,6 +17,7 @@ import { TopMenuComponent } from "./components/top-menu/top-menu.component";
 import { PanelComponent } from "./components/panel/panel.component";
 import { FloatSubMenuComponent } from "./components/float-sub-menu/float-sub-menu.component";
 import { AuthService } from "./components/auth/auth.service";
+import { AuthTokenInterceptor } from "./core/interceptors/auth-token.interceptor";
 
 // Component Module
 import { NgScrollbarModule, NG_SCROLLBAR_OPTIONS } from "ngx-scrollbar";
@@ -157,6 +159,7 @@ import { HacerSegundafase } from "./pages/hacercurso/segunda_fase";
 import { HacerTercerafase } from "./pages/hacercurso/tercera_fase";
 import { HacerCuartafase } from "./pages/hacercurso/cuarta_fase";
 import { HacerQuintafase } from "./pages/hacercurso/quinta_fase";
+import { ResultadoCursoPage } from "./pages/hacercurso/resultado_curso";
 //cursos
 
 import { SettingsPageV1 } from "./pages/perfil/settings-page";
@@ -280,6 +283,7 @@ import { ErrorPage } from "./pages/error/error";
     HacerTercerafase,
     HacerCuartafase,
     HacerQuintafase,
+    ResultadoCursoPage,
     MiProgreso,
     VerMiProgreso,
     ProgresoEstudiantes,
@@ -335,6 +339,11 @@ import { ErrorPage } from "./pages/error/error";
       },
     },
     AuthService,
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthTokenInterceptor,
+      multi: true,
+    },
   ],
   bootstrap: [AppComponent],
 })

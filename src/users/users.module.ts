@@ -1,56 +1,39 @@
-import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { UsersController } from './users.controller';
-import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from './entities/user.entity';
-import { JwtModule, JwtService } from '@nestjs/jwt';
-import { MailService } from 'src/services/mail.service';
-import { ResetToken, ResetTokenSchema } from './reset-token.schema';
-import { CursoModule } from 'src/curso/curso.module';
-import { CursoService } from 'src/curso/curso.service';
-import { Curso, CursoSchema } from 'src/curso/curso.entity';
-import { ActivateToken, ActivateTokenSchema } from './activate-user.schema';
-import { RolesMiddleware } from './rol.service';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './entities/user.entity';
 import { AuthMiddleware } from './middleware.service';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
-      { name: ResetToken.name, schema: ResetTokenSchema },
-      { name: Curso.name, schema: CursoSchema },
-      { name: ActivateToken.name, schema: ActivateTokenSchema }
-    ]),
-    JwtModule.register({}),
-    CursoModule,
+    TypeOrmModule.forFeature([User]),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET ?? 'jwt_secret',
+      signOptions: {
+        expiresIn: process.env.JWT_EXPIRES_IN ?? '1d',
+      },
+    }),
   ],
   controllers: [UsersController],
-  providers: [UsersService, JwtService, MailService, CursoService],
+  providers: [UsersService],
+  exports: [UsersService],
 })
-export class UsersModule {
+export class UsersModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware)
       .exclude(
+        { path: 'users', method: RequestMethod.POST },
         { path: 'users/register', method: RequestMethod.POST },
         { path: 'users/login', method: RequestMethod.POST },
-        { path: 'users/activate-account', method: RequestMethod.GET },
-        { path: 'users/:id/cursos-inscritos', method: RequestMethod.GET },
-        { path: 'users/:userId/enroll/:cursoId', method: RequestMethod.POST },
-        { path: 'cursos/buscar-curso', method: RequestMethod.GET },
-        { path: 'users/upload-profile-picture', method: RequestMethod.POST },
-        { path: 'users/change-password', method: RequestMethod.PUT },
-        { path: 'users/refresh', method: RequestMethod.POST },
-        { path: 'users/perfil', method: RequestMethod.POST },
-        { path: 'users/forgot-password', method: RequestMethod.POST },
       )
       .forRoutes(UsersController);
-
-    consumer
-      .apply(RolesMiddleware)
-      .exclude(
-        { path: 'users/change-password', method: RequestMethod.PUT }
-      )
-      .forRoutes({ path: 'restricted/*', method: RequestMethod.ALL });
   }
 }
